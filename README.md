@@ -25,7 +25,7 @@ O KaraQ [nome provisório] consiste em um sistema de gerenciamento de sessões d
   - Link protótipo figma: https://www.figma.com/design/LyXUdIbouOKrxDKlmoEArr/Prot%C3%B3tipo-Lo-fi--KaraQ-?node-id=0-1&t=EWGiLF5bN2I0hstu-1
   - Link Screencast youtube: https://youtu.be/6vqRQePJMvc
   - Link Screencast alternativo (Drive): https://drive.google.com/file/d/1CZbQ0-OU7feeF81PJM8lqcsiI8qBAj1g/view?usp=sharing
-  
+  - https://trello.com/b/Qt46Mgj6/equipe-4-karaq
 </details>
 
 <details>
@@ -53,6 +53,7 @@ O KaraQ [nome provisório] consiste em um sistema de gerenciamento de sessões d
 - Lucas Rodrigues - [@lucxsz-web](https://github.com/lucxsz-web) - [Linkedin](https://www.linkedin.com/in/lucas-rodrigues-08261b2ba/)
 - René Melo - [@renysoo](https://github.com/renysoo) - [Linkedin](https://www.linkedin.com/in/renelucena/)
 - Victor Ferreira - [@vic-fmr](https://github.com/vic-fmr) - [Linkedin](https://www.linkedin.com/in/victor-ferreira-marques/)
+
 
 
 
