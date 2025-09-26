@@ -45,9 +45,13 @@ public class KaraokeSession {
         return true;
     }
 
+    //Terminar de ajustar o removeUser
     public boolean removeUser(String userId) {
-        // Implementar lógica para remover os QueueItem dele também.
-        return connectedUsers.remove(userId) != null;
+        boolean userExisted = connectedUsers.remove(userId) != null;
+        if (userExisted) {
+            songQueue.removeIf(item -> item.getUser().getUserId().equals(userId));
+        }
+        return userExisted;
     }
 
     public void enqueueSong(QueueItem item) {
