@@ -1,10 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package com.karaoke.backend.model;
 
+import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,21 +16,30 @@ public class KaraokeSession {
     private final String sessionId;
     private final String accessCode;
     private final Map<String, User> connectedUsers;
-
     private final Queue<QueueItem> songQueue;
 
-    // Transformar em ENUM
-    private String status; // Ex: "WAITING", "PLAYING", "CLOSED"
+    private SessionStatus status; // Agora é ENUM
 
-    public KaraokeSession(String accessCode) {
-        // Gera um ID único e seguro para a sessão
+    public KaraokeSession() {
         this.sessionId = UUID.randomUUID().toString();
-        this.accessCode = accessCode;
+        this.accessCode = generateAccessCode();
 
-        // Inicializa as estruturas de dados essenciais
         this.connectedUsers = new ConcurrentHashMap<>();
         this.songQueue = new LinkedList<>();
-        this.status = "WAITING"; // Estado inicial
+        this.status = SessionStatus.WAITING; // Estado inicial
+    }
+
+    private String generateAccessCode() {
+        final String ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        final int TAMANHO = 6;
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(TAMANHO);
+
+        for (int i = 0; i < TAMANHO; i++) {
+            int index = random.nextInt(ALFABETO.length());
+            sb.append(ALFABETO.charAt(index));
+        }
+        return sb.toString();
     }
 
     public boolean addUser(User user) {
@@ -70,4 +75,10 @@ public class KaraokeSession {
         return new LinkedList<>(songQueue);
     }
 
+    // ENUM interno (pode extrair para outro arquivo se preferir)
+    public enum SessionStatus {
+        WAITING,
+        PLAYING,
+        CLOSED
+    }
 }
