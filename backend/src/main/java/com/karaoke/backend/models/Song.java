@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 
-package com.karaoke.backend.model;
+package com.karaoke.backend.models;
 
 import java.util.UUID;
 

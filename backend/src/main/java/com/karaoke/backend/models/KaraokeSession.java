@@ -1,4 +1,4 @@
-package com.karaoke.backend.model;
+package com.karaoke.backend.models;
 
 import java.security.SecureRandom;
 import java.util.LinkedList;
