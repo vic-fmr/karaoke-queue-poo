@@ -22,11 +22,14 @@ import com.karaoke.backend.models.KaraokeSession;
 public class KaraokeService {
 
     private final Map<String, KaraokeSession> activeSessions = new ConcurrentHashMap<>();
-    private final UUIDValidator uUIDValidator;
 
-    public KaraokeService(UUIDValidator uUIDValidator) {
-        this.uUIDValidator = uUIDValidator;
-    }
+    //Tava dando erro
+//    private final UUIDValidator uUIDValidator;
+//
+//    public KaraokeService(UUIDValidator uUIDValidator) {
+//        // Se você precisar de outros serviços no futuro, adicione-os aqui, mas não o UUIDValidator
+//        this.uUIDValidator = uUIDValidator;
+//    }
 
     public KaraokeSession createSession() {
         KaraokeSession newSession = new KaraokeSession();
