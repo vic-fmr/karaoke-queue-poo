@@ -7,12 +7,9 @@ package com.karaoke.backend.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 @Data
-@RequiredArgsConstructor 
 public class QueueItem {
 
     private final String queueItemId;
@@ -23,7 +20,6 @@ public class QueueItem {
     public QueueItem(User user, Song song) {
         this.queueItemId = UUID.randomUUID().toString();
         this.timestampAdded = LocalDateTime.now();
-
         this.user = user;
         this.song = song;
     }
