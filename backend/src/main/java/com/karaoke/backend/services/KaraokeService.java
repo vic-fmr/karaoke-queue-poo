@@ -33,8 +33,8 @@ public class KaraokeService {
 
     public KaraokeSession createSession() {
         KaraokeSession newSession = new KaraokeSession();
-        activeSessions.put(newSession.getSessionId(), newSession);
-        System.out.println("LOG: Nova sessão criada com o código: " + newSession.getSessionId());
+        activeSessions.put(newSession.getAccessCode(), newSession);
+        System.out.println("LOG: Nova sessão criada! \nCodigo de Acesso: " + newSession.getAccessCode());
         return newSession;
     }
 

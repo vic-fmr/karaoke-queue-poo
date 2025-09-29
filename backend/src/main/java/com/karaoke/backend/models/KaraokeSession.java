@@ -13,7 +13,7 @@ import lombok.Data;
 @Data
 public class KaraokeSession {
 
-    private final String sessionId;
+    // private final String sessionId;
     private final String accessCode;
     private final Map<String, User> connectedUsers;
     private final Queue<QueueItem> songQueue;
@@ -21,7 +21,7 @@ public class KaraokeSession {
     private SessionStatus status; // Agora é ENUM
 
     public KaraokeSession() {
-        this.sessionId = UUID.randomUUID().toString();
+        // this.sessionId = UUID.randomUUID().toString();
         this.accessCode = generateAccessCode();
 
         this.connectedUsers = new ConcurrentHashMap<>();
