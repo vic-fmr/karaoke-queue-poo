@@ -1,53 +1,30 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package com.karaoke.backend.models;
 
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "app_user") // Usamos "app_user" porque "user" pode ser uma palavra reservada no SQL
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
-    private final String userId;
+    @Id
+    private String userId; // Mantemos o UUID como ID, já que é gerado na aplicação
 
     private String name;
 
-    private String codigoSessao;
+    @ManyToOne(fetch = FetchType.LAZY) // 1. Define um relacionamento "Muitos para Um": Muitos usuários pertencem a uma sessão
+    @JoinColumn(name = "session_id") // 2. Cria uma coluna "session_id" na tabela "app_user" para a chave estrangeira
+    @JsonIgnore // 3. Evita que a sessão seja serializada junto com o usuário, prevenindo loops infinitos
+    private KaraokeSession session;
 
-    public String getName() {
-        return name;
+    public User(String userId, String name) {
+        this.userId = userId;
+        this.name = name;
     }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getCodigoSessao() {
-        return codigoSessao;
-    }
-
-    public User(){
-        this.userId = UUID.randomUUID().toString();
-    }
-
-    public User(String nome, String codigoSessao) {
-        this.userId = UUID.randomUUID().toString();
-        this.name = nome;
-        this.codigoSessao = codigoSessao;
-    }
-
-    public void setUserName(String nome) {
-        this.name = nome;
-    }
-
-    @Override
-    public String toString() {
-        return "Usuario{" +
-               "id='" + userId + '\'' +
-               ", nome='" + name + '\'' +
-               ", codigoSessao='" + codigoSessao + '\'' +
-               '}';
-    }
-
 }

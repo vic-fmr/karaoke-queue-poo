@@ -1,34 +1,25 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package com.karaoke.backend.models;
 
-import java.util.UUID;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
+@Entity
 @Data
-@RequiredArgsConstructor // Para o Spring Boot
+@NoArgsConstructor
+@AllArgsConstructor
 public class Song {
-    
-    private final String songId; 
-    
+
+    @Id
+    private String songId;
+
     private String title;
     private String artist;
 
-    // ATRIBUTOS FUTUROS (da API do YouTube)
-    // private String videoId; 
-    // private int durationSeconds; 
-    // private String thumbnailUrl;
-    
+    public Song(String title, String url){
 
-    public Song(String title, String artist) {
-        this.songId = UUID.randomUUID().toString();
-        
-        this.title = title;
-        this.artist = artist;
     }
+
 }

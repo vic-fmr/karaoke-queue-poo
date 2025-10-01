@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/sessions")
 public class KaraokeController {
@@ -18,11 +21,18 @@ public class KaraokeController {
     private KaraokeService service;
 
     @PostMapping
-    public ResponseEntity<KaraokeSession> createSession(){
+    public ResponseEntity<KaraokeSession> createSession() {
         KaraokeSession newSession = service.createSession();
-        return ResponseEntity.ok(newSession);
+        URI location = URI.create(String.format("/api/sessions/%s", newSession.getAccessCode()));
+        return ResponseEntity.created(location).body(newSession);
     }
 
+
+    @GetMapping
+    public ResponseEntity<List<KaraokeSession>> getAllSessions(){
+        List<KaraokeSession> session = service.getAllSessions();
+        return ResponseEntity.ok(session);
+    }
 
     @GetMapping("/{sessionCode}")
     public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode){
@@ -32,7 +42,7 @@ public class KaraokeController {
 
     @PostMapping("/{sessionCode}/queue")
     public ResponseEntity<Void> addSongToQueue(@PathVariable String sessionCode, @RequestBody AddSongRequest request){
-        service.addSongToQueue(sessionCode.toUpperCase(), request.getYoutubeUrl(), request.getUserId());
+        service.addSongToQueue(sessionCode.toUpperCase(), request.getYoutubeUrl(), request.getUserId(), request.getUserName());
         return ResponseEntity.ok().build();
     }
 

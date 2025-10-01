@@ -1,26 +1,43 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package com.karaoke.backend.models;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
+@Entity
 @Data
+@NoArgsConstructor
 public class QueueItem {
 
-    private final String queueItemId;
-    private User user;
-    private Song song;
-    private final LocalDateTime timestampAdded;
+    @Id
+    private String queueItemId;
 
-    public QueueItem(User user, Song song) {
-        this.queueItemId = UUID.randomUUID().toString();
-        this.timestampAdded = LocalDateTime.now();
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime timestampAdded;
+
+    // Relacionamento com a sessão a que pertence
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id")
+    @JsonIgnore
+    private KaraokeSession session;
+
+    // Relacionamento com o usuário que adicionou a música
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    // Relacionamento com a música que foi adicionada
+    @ManyToOne
+    @JoinColumn(name = "song_id")
+    private Song song;
+
+    public QueueItem(String queueItemId, User user, Song song) {
+        this.queueItemId = queueItemId;
         this.user = user;
         this.song = song;
+        this.timestampAdded = LocalDateTime.now();
     }
 }
