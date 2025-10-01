@@ -31,7 +31,10 @@ O KaraQ [nome provisório] consiste em um sistema de gerenciamento de sessões d
 <details>
   <summary>Entrega 02</summary>
   
-  
+  ### 2 Funcionalidades Implementadas
+  - Link Screencast youtube:  
+  - Issue/Bug Tracker 1 (Github): https://drive.google.com/file/d/1ifb4oiXXE2wI4W_kj5F0w_hyvJO1u2Hs/view?usp=drive_link
+  - Issue/Bug Tracker 2 (Github): https://drive.google.com/file/d/1tpihUOwz2knCuZ8nn8REKV_hbypas1Ug/view?usp=drive_link
 </details>
 
 <details>
@@ -53,6 +56,7 @@ O KaraQ [nome provisório] consiste em um sistema de gerenciamento de sessões d
 - Lucas Rodrigues - [@lucxsz-web](https://github.com/lucxsz-web) - [Linkedin](https://www.linkedin.com/in/lucas-rodrigues-08261b2ba/)
 - René Melo - [@renysoo](https://github.com/renysoo) - [Linkedin](https://www.linkedin.com/in/renelucena/)
 - Victor Ferreira - [@vic-fmr](https://github.com/vic-fmr) - [Linkedin](https://www.linkedin.com/in/victor-ferreira-marques/)
+
 
 
 
