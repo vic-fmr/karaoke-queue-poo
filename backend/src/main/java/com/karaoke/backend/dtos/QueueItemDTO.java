@@ -22,7 +22,7 @@ public class QueueItemDTO {
     // Opcional: Adicionar um timestamp simplificado se necessário
     // private String timeAdded; 
 
-    // Método estático para mapeamento (melhor se implementado em uma classe Mapper ou Service)
+    // Metodo estático para mapeamento (melhor se implementado em uma classe Mapper ou Service)
     // Para simplificar, colocamos no DTO para demonstração
     public static QueueItemDTO fromEntity(com.karaoke.backend.models.QueueItem item) {
         // Seus modelos User e Song estão aninhados em QueueItem

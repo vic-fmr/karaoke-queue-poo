@@ -1,6 +1,6 @@
 package com.karaoke.backend.controllers;
 
-import com.karaoke.backend.dtos.AddSongRequest;
+import com.karaoke.backend.dtos.AddSongRequestDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.services.KaraokeService;
 import com.karaoke.backend.services.exception.SessionNotFoundException;
@@ -41,7 +41,7 @@ public class KaraokeController {
     }
 
     @PostMapping("/{sessionCode}/queue")
-    public ResponseEntity<Void> addSongToQueue(@PathVariable String sessionCode, @RequestBody AddSongRequest request){
+    public ResponseEntity<Void> addSongToQueue(@PathVariable String sessionCode, @RequestBody AddSongRequestDTO request){
         service.addSongToQueue(sessionCode.toUpperCase(), request.getYoutubeUrl(), request.getUserId(), request.getUserName());
         return ResponseEntity.ok().build();
     }
@@ -49,6 +49,12 @@ public class KaraokeController {
     @DeleteMapping("/{sessionCode}")
     public ResponseEntity<Void> endSession(@PathVariable String sessionCode){
         service.endSession(sessionCode.toUpperCase());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{sessionCode}/queue/{queueItemId}")
+    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable String queueItemId){
+        service.deleteSongFromQueue(sessionCode.toUpperCase(), queueItemId);
         return ResponseEntity.noContent().build();
     }
 
