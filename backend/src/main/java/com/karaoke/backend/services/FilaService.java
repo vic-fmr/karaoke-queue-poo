@@ -22,9 +22,9 @@ public class FilaService {
     @Autowired
     private KaraokeSessionRepository sessionRepository; // Assumindo um Repository para obter a Sessão
     
-    // ... (Seu método adicionarMusica) ...
+    // ... (Seu metodo adicionarMusica) ...
     
-    // Método que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
+    // Metodo que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
     public void notificarAtualizacaoFila(String accessCode) {
         
         // 1. Busque a sessão completa (com a lista de QueueItem já ordenada pelo @OrderBy no seu modelo)

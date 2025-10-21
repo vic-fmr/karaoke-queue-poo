@@ -66,6 +66,11 @@ public class KaraokeSession {
         item.setSession(this);
     }
 
+    public void deleteQueueItem(QueueItem item) {
+        songQueue.remove(item);
+        item.setSession(null);
+    }
+
     public enum SessionStatus {
 
         WAITING,
