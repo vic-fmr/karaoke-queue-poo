@@ -1,0 +1,30 @@
+<main class="auth-container">
+    <header>
+      <span class="material-symbols-outlined icon">
+        person
+      </span>
+      <h1>QueueUP</h1>
+      <p>Welcome back! Please log in.</p>
+    </header>
+  
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input id="email" type="email" placeholder="Enter your email" formControlName="email">
+      </div>
+  
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter your password" formControlName="password">
+      </div>
+  
+      <button type="submit" class="cta-button" [disabled]="!loginForm.valid">
+        Log In
+      </button>
+    </form>
+  
+    <footer class="auth-link">
+      <p>Don't have an account? <a routerLink="/register">Sign up</a></p>
+    </footer>
+  </main>

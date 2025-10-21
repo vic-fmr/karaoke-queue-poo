@@ -1,0 +1,69 @@
+<nav class="navbar">
+    <div class="nav-left">
+      <a routerLink="/profile" class="logo">
+        <span class="material-symbols-outlined">music_note</span>
+        SingIt
+      </a>
+    </div>
+    <div class="nav-right">
+      <a routerLink="/home" class="nav-link">Home</a>
+      <a routerLink="/rooms" class="nav-link">Rooms</a>
+      <a routerLink="/profile" class="nav-link active">Profile</a>
+      <button class="icon-button">
+        <span class="material-symbols-outlined">notifications</span>
+      </button>
+      <img src="assets/icon.jpg" alt="Meu Ícone" class="nav-avatar">
+    </div>
+  </nav>
+  
+  <main class="profile-content">
+    <h1>Your Profile</h1>
+  
+    <section class="profile-card">
+      <div class="avatar-container">
+        <img src="assets/icon.png" alt="Meu Ícone" class="profile-avatar">
+        <button class="edit-avatar-btn icon-button">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+      </div>
+      
+      <h2>{{ userName }}</h2>
+      <p>{{ userHandle }}</p>
+      
+      <button class="cta-button">
+        Edit Profile
+      </button>
+    </section>
+  
+    <section class="history-section">
+      <h3>History</h3>
+      
+      <div class="tabs">
+        <button class="tab-button active">Songs Sung</button>
+        <button class="tab-button">Rooms Joined</button>
+      </div>
+      
+      <ul class="song-list">
+        <li>
+          <img src="assets/song-cover.png" alt="Song Cover">
+          <div class="song-details">
+            <strong>Song 1</strong>
+            <span>Artist 1 - Song 1</span>
+          </div>
+          <button class="icon-button options-btn">
+            <span class="material-symbols-outlined">more_horiz</span>
+          </button>
+        </li>
+        <li>
+          <img src="assets/song-cover.png" alt="Song Cover">
+          <div class="song-details">
+            <strong>Song 2</strong>
+            <span>Artist 2 - Song 2</span>
+          </div>
+          <button class="icon-button options-btn">
+            <span class="material-symbols-outlined">more_horiz</span>
+          </button>
+        </li>
+      </ul>
+    </section>
+  </main>
