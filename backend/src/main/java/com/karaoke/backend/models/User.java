@@ -5,26 +5,49 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+
+import java.util.Collection;
+import java.util.List;
 
 @Entity
-@Table(name = "app_user") // Usamos "app_user" porque "user" pode ser uma palavra reservada no SQL
+@Table(name = "tb_user")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class User implements UserDetails{
 
     @Id
-    private String userId; // Mantemos o UUID como ID, já que é gerado na aplicação
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private String name;
+    private String username;
+    private String email;
+    private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY) // 1. Define um relacionamento "Muitos para Um": Muitos usuários pertencem a uma sessão
-    @JoinColumn(name = "session_id") // 2. Cria uma coluna "session_id" na tabela "app_user" para a chave estrangeira
-    @JsonIgnore // 3. Evita que a sessão seja serializada junto com o usuário, prevenindo loops infinitos
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id")
+    @JsonIgnore
     private KaraokeSession session;
 
-    public User(String userId, String name) {
-        this.userId = userId;
-        this.name = name;
+    public User(String userId, String userName) {
     }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Por enquanto, retorne uma lista vazia ou defina uma permissão padrão, se necessário.
+        // Exemplo: return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+    @Override
+    public boolean isEnabled() { return true; }
 }

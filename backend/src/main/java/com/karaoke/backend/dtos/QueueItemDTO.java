@@ -35,7 +35,7 @@ public class QueueItemDTO {
             item.getSong().getTitle(),
             //item.getSong().getUrl(), // <<-- ASSUMINDO que você adicionou .getUrl() no Song
             "link_temporario_ate_ajustar_o_Song", 
-            item.getUser().getName(),
+            item.getUser().getUsername(),
             item.getQueueItemId()
         );
     }
