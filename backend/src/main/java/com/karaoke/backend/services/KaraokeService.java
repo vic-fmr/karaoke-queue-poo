@@ -67,8 +67,25 @@ public class KaraokeService {
         KaraokeSession session = getSession(accessCode);
 
 
-        User user = userRepository.findById(userId).orElseGet(() -> {
-            User newUser = new User(userId, userName);
+        // 1. Converte o userId (String) para Long ANTES de buscar
+        Long userIdAsLong;
+        try {
+            userIdAsLong = Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            // Trate o erro: O ID recebido não é um número válido.
+            // Você pode lançar uma exceção customizada, retornar um erro, etc.
+            // Exemplo:
+            throw new IllegalArgumentException("ID do usuário inválido: " + userId);
+        }
+
+        // 2. Busca o usuário usando o ID Long
+        User user = userRepository.findById(userIdAsLong).orElseGet(() -> {
+            // 3. Cria o novo usuário SEM definir o ID manualmente
+            //    (Assumindo que o construtor ou setters cuidam disso, e o ID é gerado pelo JPA)
+            User newUser = new User(); // Use o construtor apropriado ou setters
+            newUser.setUsername(userName); // Define o nome de usuário
+            // Defina outros campos se necessário (email, etc.)
+            
             newUser.setSession(session); // Associa o novo usuário à sessão
             return userRepository.save(newUser);
         });
