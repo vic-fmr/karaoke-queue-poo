@@ -7,11 +7,11 @@ import { Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
-  private base = '/auth';
+  private base = 'http://localhost:8080/auth';
   constructor(private http: HttpClient, private router: Router) {}
 
-  login(username: string, password: string): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${this.base}/login`, { username, password })
+  login(email: string, password: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${this.base}/login`, { email, password })
       .pipe(tap(res => {
         if (res?.token) localStorage.setItem('jwt', res.token);
       }));

@@ -38,7 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             var login = tokenService.validateToken(token);
 
             if (login != null && !login.isEmpty()) {
-                // 1. Busca o UserDetails pelo username no token
+                // 1. Busca o UserDetails pelo email no token
                 User user = userRepository.findByUsername(login)
                         .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado no token"));
 
@@ -58,5 +58,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader == null) return null;
         // Espera-se o formato "Bearer <TOKEN>"
         return authHeader.replace("Bearer ", "");
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Retorna TRUE para TODAS as requisições, desabilitando o filtro JWT
+        // Se a rota funcionar, o problema estava 100% no filtro.
+        // SE NÃO FUNCIONAR, a causa é outra.
+        return request.getRequestURI().startsWith("/auth/");
     }
 }

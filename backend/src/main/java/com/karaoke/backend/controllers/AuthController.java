@@ -35,7 +35,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO request) {
         // 1. Cria o objeto de autenticação com as credenciais
-        var usernamePassword = new UsernamePasswordAuthenticationToken(request.username(), request.password());
+        var usernamePassword = new UsernamePasswordAuthenticationToken(request.email(), request.password());
 
         // 2. Tenta autenticar (chama o UserDetailsService)
         var auth = authenticationManager.authenticate(usernamePassword);

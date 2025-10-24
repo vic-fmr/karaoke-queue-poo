@@ -189,7 +189,7 @@ class KaraokeControllerIntegrationTest {
         assertThat(updatedSession.getSongQueue()).hasSize(1);
         assertThat(updatedSession.getSongQueue().get(0).getUser().getUsername()).isEqualTo(newUserName);
 
-        User createdUser = userRepository.findByUsername(newUserName).orElseThrow(() -> new AssertionError("Novo usuário não encontrado pelo username"));
+        User createdUser = userRepository.findByUsername(newUserName).orElseThrow(() -> new AssertionError("Novo usuário não encontrado pelo email"));
         assertThat(createdUser.getUsername()).isEqualTo(newUserName);
          // Opcional: Verificar se o ID é o esperado, pode ser útil se formos controlar a sequência H2
         // assertThat(createdUser.getId()).isEqualTo(Long.parseLong(newUserIdString));

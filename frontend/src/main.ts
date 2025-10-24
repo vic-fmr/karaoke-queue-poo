@@ -1,13 +1,25 @@
+// TypeScript
+// File: frontend/src/main.ts
 import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { App } from './app/app'; // <--- Deve ser 'App' e não 'AppComponent'
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AppComponent } from './app/app.component';
+import { routes } from './app/app.routes';
 import { AuthInterceptor } from './app/interceptors/auth.interceptor';
 
-bootstrapApplication(App, {
+console.log('[main.ts] Iniciando bootstrap...');
+
+bootstrapApplication(AppComponent, {
   providers: [
-    provideHttpClient(withInterceptors([AuthInterceptor])),
-    // ... outros providers ...
+    provideRouter(routes),
+    provideHttpClient(withInterceptorsFromDi()),
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ]
 })
-  .catch((err) => console.error(err));
+  .then(() => console.log('[main.ts] Bootstrap concluído com sucesso'))
+  .catch((err) => {
+    console.error('[main.ts] Erro no bootstrap:', err);
+    try {
+      document.body.innerHTML = `<h1 style="color:red;">Erro: ${err?.message || String(err)}</h1>`;
+    } catch {}
+  });

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { User } from '../user';
-import { AuthService } from '../services/auth.service';
+import {AuthService} from '../services/AuthService';
 
 @Component({
   selector: 'app-register',
@@ -17,7 +17,7 @@ export class Register { // <--- Nome da classe é 'Register'
   // Injeta o Router e o UserService
   constructor(
     private router: Router,
-    private userService: User, 
+    private userService: User,
     private authService: AuthService
   ) {}
 
@@ -34,7 +34,7 @@ export class Register { // <--- Nome da classe é 'Register'
       const email = this.registerForm.value.email || '';
       const password = this.registerForm.value.password || '';
 
-      // 1) Chama backend para salvar
+
       this.authService.register(name, email, password).subscribe({
         next: () => {
           // opcional: auto-login após cadastro
