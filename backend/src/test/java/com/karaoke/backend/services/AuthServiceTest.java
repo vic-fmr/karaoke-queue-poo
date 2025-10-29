@@ -32,13 +32,16 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void register_ShouldSaveNewUser_WhenUsernameIsAvailable() {
+    // Nome do teste atualizado para refletir a lógica de e-mail
+    void register_ShouldSaveNewUser_WhenEmailIsAvailable() { 
         RegisterRequestDTO dto = new RegisterRequestDTO("testuser", "test@email.com", "password123");
         User newUser = new User();
         newUser.setUsername(dto.username());
+        newUser.setEmail(dto.email()); // Adicionado para um mock mais completo
         newUser.setPassword("encodedPassword");
 
-        when(userRepository.existsByUsername(dto.username())).thenReturn(false);
+        // <-- MUDANÇA: Verificar se existe por E-MAIL, não por username
+        when(userRepository.existsByEmail(dto.email())).thenReturn(false);
         when(passwordEncoder.encode(dto.password())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
@@ -46,17 +49,22 @@ class AuthServiceTest {
 
         assertNotNull(savedUser);
         assertEquals("testuser", savedUser.getUsername());
+        assertEquals("test@email.com", savedUser.getEmail()); // <-- NOVA ASSERTIVA: Verificar o e-mail
         assertEquals("encodedPassword", savedUser.getPassword());
 
-        verify(userRepository, times(1)).existsByUsername("testuser");
+        // <-- MUDANÇA: Verificar a chamada do método de e-mail
+        verify(userRepository, times(1)).existsByEmail("test@email.com");
         verify(passwordEncoder, times(1)).encode("password123");
         verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test
-    void register_ShouldThrowException_WhenUsernameExists() {
+    // Nome do teste atualizado
+    void register_ShouldThrowException_WhenEmailExists() {
         RegisterRequestDTO dto = new RegisterRequestDTO("existinguser", "test@email.com", "password123");
-        when(userRepository.existsByUsername("existinguser")).thenReturn(true);
+        
+        // <-- MUDANÇA: Mock para retornar true na verificação de E-MAIL
+        when(userRepository.existsByEmail("test@email.com")).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             authService.register(dto);
@@ -64,32 +72,49 @@ class AuthServiceTest {
 
         assertEquals("Usuário já existe", exception.getMessage());
 
+        // <-- MUDANÇA: Verificar se o 'existsByEmail' foi chamado
+        verify(userRepository, times(1)).existsByEmail("test@email.com");
         verify(userRepository, never()).save(any(User.class));
         verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
     void loadUserByUsername_ShouldReturnUserDetails_WhenUserExists() {
+        String testEmail = "test@email.com";
         User mockUser = new User();
         mockUser.setUsername("testuser");
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
+        mockUser.setEmail(testEmail);
 
-        UserDetails userDetails = authService.loadUserByUsername("testuser");
+        // <-- MUDANÇA: O método agora busca por e-mail
+        when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(mockUser));
+
+        // <-- MUDANÇA: Passar o e-mail como parâmetro
+        UserDetails userDetails = authService.loadUserByUsername(testEmail);
 
         assertNotNull(userDetails);
-        assertEquals("testuser", userDetails.getUsername());
-        verify(userRepository, times(1)).findByUsername("testuser");
+        // O UserDetails retornado ainda deve ter o username correto
+        assertEquals("testuser", userDetails.getUsername()); 
+        
+        // <-- MUDANÇA: Verificar se 'findByEmail' foi chamado
+        verify(userRepository, times(1)).findByEmail(testEmail);
     }
 
     @Test
     void loadUserByUsername_ShouldThrowException_WhenUserDoesNotExist() {
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+        String testEmail = "nonexistent@email.com";
+        
+        // <-- MUDANÇA: Mock da busca por e-mail
+        when(userRepository.findByEmail(testEmail)).thenReturn(Optional.empty());
 
         UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
-            authService.loadUserByUsername("nonexistent");
+            // <-- MUDANÇA: Passar o e-mail
+            authService.loadUserByUsername(testEmail);
         });
 
-        assertEquals("Usuário não encontrado: nonexistent", exception.getMessage());
-        verify(userRepository, times(1)).findByUsername("nonexistent");
+        // <-- MUDANÇA: A mensagem de exceção agora deve conter o e-mail
+        assertEquals("Usuário não encontrado: " + testEmail, exception.getMessage());
+        
+        // <-- MUDANÇA: Verificar se 'findByEmail' foi chamado
+        verify(userRepository, times(1)).findByEmail(testEmail);
     }
 }
