@@ -18,7 +18,6 @@ public class AuthService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // Lógica de Cadastro
     public User register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.email())) {
             throw new RuntimeException("Usuário já existe"); // Trate melhor essa exceção
@@ -34,11 +33,6 @@ public class AuthService implements UserDetailsService {
         return userRepository.save(newUser);
     }
 
-
-
-    // A lógica de Login será tratada principalmente pelo Spring Security com JWT,
-    // mas o serviço de JWT (TokenService) precisará ser injetado aqui.
-    // Por enquanto, vamos focar no cadastro. O login virá na próxima etapa.
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)

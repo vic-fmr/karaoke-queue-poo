@@ -31,19 +31,11 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
-    // O método /login virá depois da configuração do JWT e Security
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO request) {
-        // 1. Cria o objeto de autenticação com as credenciais
         var usernamePassword = new UsernamePasswordAuthenticationToken(request.email(), request.password());
-
-        // 2. Tenta autenticar (chama o UserDetailsService)
         var auth = authenticationManager.authenticate(usernamePassword);
-
-        // 3. Se autenticado, gera o token
         var token = tokenService.generateToken((User) auth.getPrincipal());
-
-        // 4. Retorna o token para o cliente
         return ResponseEntity.ok(new AuthResponseDTO(token));
     }
 }

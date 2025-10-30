@@ -37,8 +37,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
+        String localHost = "http://localhost:4200";
+        String codespaceHost = "https://neglected-werewolf-x59r4p4wr56w3v9gq-4200.app.github.dev"; // Substitua pelo host real do Codespace
+
         // Origem do seu frontend
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of(localHost, codespaceHost));
 
         // Métodos obrigatórios, incluindo OPTIONS (para o preflight)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));

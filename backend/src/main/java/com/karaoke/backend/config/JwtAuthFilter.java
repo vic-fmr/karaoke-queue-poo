@@ -62,9 +62,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Retorna TRUE para TODAS as requisições, desabilitando o filtro JWT
-        // Se a rota funcionar, o problema estava 100% no filtro.
-        // SE NÃO FUNCIONAR, a causa é outra.
         return request.getRequestURI().startsWith("/auth/");
     }
 }
