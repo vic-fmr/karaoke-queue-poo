@@ -1,7 +1,7 @@
 package com.karaoke.backend.controllers;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
-import com.karaoke.backend.services.YouTubeService;
+import com.karaoke.backend.services.YoutubeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +13,7 @@ import java.util.List;
 public class YouTubeController {
 
     @Autowired
-    private YouTubeService youTubeService;
+    private YoutubeService youTubeService;
 
 
     @GetMapping

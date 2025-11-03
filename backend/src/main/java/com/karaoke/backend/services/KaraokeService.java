@@ -39,7 +39,7 @@ public class KaraokeService {
     private QueueItemRepository queueItemRepository;
 
     @Autowired
-    private YouTubeService youTubeService;
+    private YoutubeService youTubeService;
 
     @Transactional
     public KaraokeSession createSession() {

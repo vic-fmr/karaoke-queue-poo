@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
-import com.karaoke.backend.services.YouTubeService;
+import com.karaoke.backend.services.YoutubeService;
 
 @RestController
 @RequestMapping("/api/videos")
 public class SongController {
 
     @Autowired
-    private YouTubeService youTubeService;
+    private YoutubeService youTubeService;
 
     @GetMapping("/search")
     public List<YouTubeVideoDTO> search(@RequestParam String query) {

@@ -47,7 +47,7 @@ class KaraokeServiceTest {
     @Mock
     private QueueItemRepository queueItemRepository;
     @Mock
-    private YouTubeService youTubeService; // <-- NOVO MOCK
+    private YoutubeService youTubeService; // <-- NOVO MOCK
 
     @InjectMocks
     private KaraokeService karaokeService;

@@ -13,7 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 
 @Service
-public class YouTubeService {
+public class YoutubeService {
 
     // Chave da API configurada no application.properties
     @Value("${youtube.api.key}")

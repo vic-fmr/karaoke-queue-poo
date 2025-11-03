@@ -1,7 +1,7 @@
 package com.karaoke.backend.services;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
-import com.karaoke.backend.services.YouTubeService;
+import com.karaoke.backend.services.YoutubeService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class YouTubeServiceTest {
 
     @InjectMocks
-    private YouTubeService youTubeService;
+    private YoutubeService youTubeService;
 
     @Mock
     private RestTemplate restTemplate;
