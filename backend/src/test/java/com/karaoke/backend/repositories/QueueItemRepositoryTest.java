@@ -1,17 +1,17 @@
 package com.karaoke.backend.repositories;
 
-import com.karaoke.backend.models.QueueItem;
-import com.karaoke.backend.models.Song;
-import com.karaoke.backend.models.User;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.karaoke.backend.models.QueueItem;
+import com.karaoke.backend.models.Song;
+import com.karaoke.backend.models.User;
 
 @DataJpaTest
 class QueueItemRepositoryTest {
@@ -28,7 +28,13 @@ class QueueItemRepositoryTest {
         user.setUsername("Test User");
         entityManager.persist(user); 
 
-        Song song = new Song(UUID.randomUUID().toString(), "Test Song", "Test Artist");
+        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
+        Song song = new Song(
+            UUID.randomUUID().toString(), 
+            "TESTE_YOUTUBE_ID_1", 
+            "Test Song", 
+            "Test Artist"
+        );
         entityManager.persist(song); 
         entityManager.flush(); 
 
@@ -52,9 +58,20 @@ class QueueItemRepositoryTest {
 
      @Test
     void findById_ShouldReturnQueueItem_WhenExists() {
-        User user = new User("user2", "Another User");
+        // CORRIGIDO: User deve ter os argumentos do construtor completo (assumindo songId, username)
+        // Se user não tiver um construtor com argumentos, use setters.
+        // Assumindo um construtor (String username):
+        User user = new User();
+        user.setUsername("Another User"); 
         entityManager.persist(user);
-        Song song = new Song(UUID.randomUUID().toString(), "Another Song", "Another Artist");
+        
+        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
+        Song song = new Song(
+            UUID.randomUUID().toString(), 
+            "TESTE_YOUTUBE_ID_2",
+            "Another Song", 
+            "Another Artist"
+        );
         entityManager.persist(song);
         entityManager.flush();
 
@@ -70,9 +87,18 @@ class QueueItemRepositoryTest {
 
     @Test
     void delete_ShouldRemoveQueueItem() {
-        User user = new User("user3", "Delete User");
+        // CORRIGIDO: User deve ter os argumentos do construtor completo (assumindo songId, username)
+        User user = new User();
+        user.setUsername("Delete User");
         entityManager.persist(user);
-        Song song = new Song(UUID.randomUUID().toString(), "Delete Song", "Delete Artist");
+        
+        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
+        Song song = new Song(
+            UUID.randomUUID().toString(), 
+            "TESTE_YOUTUBE_ID_3",
+            "Delete Song", 
+            "Delete Artist"
+        );
         entityManager.persist(song);
         entityManager.flush();
 

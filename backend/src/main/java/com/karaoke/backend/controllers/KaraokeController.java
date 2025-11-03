@@ -1,17 +1,26 @@
 package com.karaoke.backend.controllers;
 
-import com.karaoke.backend.dtos.AddSongRequestDTO;
-import com.karaoke.backend.models.KaraokeSession;
-import com.karaoke.backend.services.KaraokeService;
-import com.karaoke.backend.services.exception.SessionNotFoundException;
+import java.net.URI;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-import java.util.List;
+import com.karaoke.backend.dtos.AddSongRequestDTO;
+import com.karaoke.backend.models.KaraokeSession;
+import com.karaoke.backend.services.KaraokeService;
+import com.karaoke.backend.services.exception.SessionNotFoundException;
+import com.karaoke.backend.services.exception.VideoNotFoundException;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -40,9 +49,18 @@ public class KaraokeController {
         return ResponseEntity.ok(session);
     }
 
-    @PostMapping("/{sessionCode}/queue")
-    public ResponseEntity<Void> addSongToQueue(@PathVariable String sessionCode, @RequestBody AddSongRequestDTO request){
-        service.addSongToQueue(sessionCode.toUpperCase(), request.getYoutubeUrl(), request.getUserId(), request.getUserName());
+@PostMapping("/{sessionCode}/queue")
+    public ResponseEntity<Void> addSongToQueue(
+        @PathVariable String sessionCode, 
+        @RequestBody AddSongRequestDTO request // DTO que agora contém o TÍTULO
+    ) {
+        // O Service agora recebe o título da música
+        service.addSongToQueue(
+            sessionCode.toUpperCase(), 
+            request.getSongTitle(),
+            request.getUserId(), 
+            request.getUserName()
+        );
         return ResponseEntity.ok().build();
     }
 
@@ -62,5 +80,11 @@ public class KaraokeController {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<String> handleSessionNotFound(SessionNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-}
+    }
+
+    @ExceptionHandler(VideoNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND) // Ou HttpStatus.UNPROCESSABLE_ENTITY (422)
+    public ResponseEntity<String> handleVideoNotFound(VideoNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 }
