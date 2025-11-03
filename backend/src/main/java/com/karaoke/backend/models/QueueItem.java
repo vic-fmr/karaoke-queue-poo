@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -13,31 +14,30 @@ import java.time.LocalDateTime;
 public class QueueItem {
 
     @Id
-    private String queueItemId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long queueItemId;
 
+    // Data/Hora gerada pelo Hibernate
     @Column(nullable = false, updatable = false)
+    @CreationTimestamp
     private LocalDateTime timestampAdded;
 
-    // Relacionamento com a sessão a que pertence
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "session_id")
+    @JoinColumn(name = "session_id", nullable = false)
     @JsonIgnore
     private KaraokeSession session;
 
-    // Relacionamento com o usuário que adicionou a música
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    // Relacionamento com a música que foi adicionada
     @ManyToOne
     @JoinColumn(name = "song_id")
     private Song song;
 
-    public QueueItem(String queueItemId, User user, Song song) {
-        this.queueItemId = queueItemId;
+    public QueueItem(KaraokeSession session, User user, Song song) {
+        this.session = session;
         this.user = user;
         this.song = song;
-        this.timestampAdded = LocalDateTime.now();
     }
 }

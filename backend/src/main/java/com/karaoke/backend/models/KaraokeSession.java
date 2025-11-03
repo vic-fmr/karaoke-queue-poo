@@ -23,10 +23,8 @@ public class KaraokeSession {
     @Enumerated(EnumType.STRING)
     private SessionStatus status;
 
-
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<User> connectedUsers = new ArrayList<>();
-
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("timestampAdded ASC")

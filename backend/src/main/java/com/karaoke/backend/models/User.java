@@ -2,7 +2,6 @@ package com.karaoke.backend.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,15 +15,18 @@ import java.util.List;
 @Table(name = "tb_user")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class User implements UserDetails{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String username;
+
+    @Column(unique = true)
     private String email;
+
     private String password;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,8 +34,6 @@ public class User implements UserDetails{
     @JsonIgnore
     private KaraokeSession session;
 
-    public User(String userId, String userName) {
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

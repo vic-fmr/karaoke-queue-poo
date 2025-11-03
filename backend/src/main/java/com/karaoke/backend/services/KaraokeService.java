@@ -2,9 +2,8 @@ package com.karaoke.backend.services;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,26 +19,16 @@ import com.karaoke.backend.repositories.UserRepository;
 import com.karaoke.backend.services.exception.SessionNotFoundException;
 import com.karaoke.backend.services.exception.VideoNotFoundException;
 
+@RequiredArgsConstructor
 @Service
 public class KaraokeService {
 
-    @Autowired
-    private KaraokeSessionRepository sessionRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private SongRepository songRepository;
-
-    @Autowired
-    private FilaService filaService;
-
-    @Autowired
-    private QueueItemRepository queueItemRepository;
-
-    @Autowired
-    private YoutubeService youTubeService;
+    private final KaraokeSessionRepository sessionRepository;
+    private final SongRepository songRepository;
+    private final FilaService filaService;
+    private final QueueItemRepository queueItemRepository;
+    private final YoutubeService youTubeService;
+    private final UserService userService;
 
     @Transactional
     public KaraokeSession createSession() {
@@ -73,87 +62,53 @@ public class KaraokeService {
     public void addSongToQueue(String accessCode, String songTitle, String userId, String userName) {
         KaraokeSession session = getSession(accessCode);
 
-        // --- LÓGICA DE INTEGRAÇÃO COM YOUTUBE (PASSO NOVO) ---
-
+        // --- 1. LÓGICA DE INTEGRAÇÃO COM YOUTUBE ---
         String searchQuery = songTitle + " karaoke";
         List<YouTubeVideoDTO> validVideos = youTubeService.searchVideos(searchQuery);
 
         if (validVideos.isEmpty()) {
-            if (validVideos.isEmpty()) {
-                throw new VideoNotFoundException(
-                        "Não foi encontrado um vídeo válido e incorporável do YouTube para a música: " + songTitle);
-            }
+            throw new VideoNotFoundException("Não foi encontrado um vídeo válido e incorporável...");
         }
 
-        // Pega o primeiro resultado (o melhor e já validado)
-        YouTubeVideoDTO bestVideo = validVideos.get(0);
+        YouTubeVideoDTO bestVideo = validVideos.getFirst();
 
-        // --- LÓGICA DE USUÁRIO E PERSISTÊNCIA (EXISTENTE) ---
+        // --- 2. LÓGICA DE USUÁRIO ---
+        User user = userService.getOrCreateUser(userId, userName, session);
 
-        // 2. Converte o userId (String) para Long ANTES de buscar
-        Long userIdAsLong;
-        try {
-            userIdAsLong = Long.parseLong(userId);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID do usuário inválido: " + userId);
-        }
-
-        // 3. Busca/Cria o usuário
-        User user = userRepository.findById(userIdAsLong).orElseGet(() -> {
-            User newUser = new User();
-            newUser.setUsername(userName);
-            newUser.setSession(session);
-            return userRepository.save(newUser);
-        });
-
-        // 4. Cria a Entidade Song com os dados OBTIDOS DO YOUTUBE
+        // --- 3. LÓGICA DE MÚSICA ---
         Song song = new Song(
-                UUID.randomUUID().toString(), // 1. songId (novo ID interno)
-                bestVideo.videoId(), // 2. youtubeVideoId (ID do YouTube)
-                bestVideo.title(), // 3. title (Título do YouTube)
-                "Artista Desconhecido" // 4. artist (Placeholder, pois a busca não retorna)
+                bestVideo.videoId(),
+                bestVideo.title(),
+                "Artista Desconhecido"
         );
 
-        // **!!! IMPORTANTE: Você precisa que o campo youtubeVideoId exista na sua
-        // Entidade Song !!!**
-        song.setYoutubeVideoId(bestVideo.videoId()); // Adiciona o ID do vídeo para persistência
-
         songRepository.save(song);
+        System.out.println("LOG: Nova música criada no banco: " + song.getTitle() + " (YouTube ID: " + song.getYoutubeVideoId() + ")");
 
-        // 5. Adiciona à Fila
-        QueueItem queueItem = new QueueItem(UUID.randomUUID().toString(), user, song);
+        // --- 4. ADICIONA À FILA ---
+        QueueItem queueItem = new QueueItem(session, user, song);
         session.addQueueItem(queueItem);
         sessionRepository.save(session);
-
         System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
 
-        // 6. Notifica o Front-end
+        // --- 5. NOTIFICAÇÃO ---
         filaService.notificarAtualizacaoFila(accessCode);
     }
 
     @Transactional
-    public void deleteSongFromQueue(String accessCode, String queueItemId) {
-        // 1. Buscamos o item da fila para garantir que ele exista.
+    public void deleteSongFromQueue(String accessCode, Long queueItemId) {
         Optional<QueueItem> itemOpt = queueItemRepository.findById(queueItemId);
         KaraokeSession session = getSession(accessCode);
 
         if (itemOpt.isPresent()) {
             QueueItem itemToDelete = itemOpt.get();
-            // A sessão não precisa ser buscada explicitamente se a QueueItem não for
-            // bidirecionalmente mapeada com a sessão.
-            // Deletamos o QueueItem diretamente.
-
             session.deleteQueueItem(itemToDelete);
-
-            // 2. Deleta o QueueItem pela entidade
-            queueItemRepository.delete(itemToDelete);
-
             System.out.println("LOG: Item de fila (" + queueItemId + ") removido da sessão " + accessCode);
         } else {
             System.out.println("ALERTA: Tentativa de remover item de fila não existente com ID: " + queueItemId);
         }
 
-        // 3. Notifica todos os clientes via WebSocket
+        // Notifica todos os clientes via WebSocket
         filaService.notificarAtualizacaoFila(accessCode);
     }
 }

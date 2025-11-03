@@ -1,21 +1,28 @@
 package com.karaoke.backend.models;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Song {
 
     @Id
-    private String songId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long songId;
+
     private String youtubeVideoId;
     private String title;
     private String artist;
 
+    public Song(String youtubeVideoId, String title, String artist) {
+        this.youtubeVideoId = youtubeVideoId;
+        this.title = title;
+        this.artist = artist;
+    }
 }

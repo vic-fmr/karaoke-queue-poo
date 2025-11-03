@@ -3,6 +3,7 @@ package com.karaoke.backend.controllers;
 import java.net.URI;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +25,11 @@ import com.karaoke.backend.services.exception.VideoNotFoundException;
 
 @RestController
 @RequestMapping("/api/sessions")
+@RequiredArgsConstructor
 public class KaraokeController {
 
-    @Autowired
-    private KaraokeService service;
+    private final KaraokeService service;
+
 
     @PostMapping
     public ResponseEntity<KaraokeSession> createSession() {
@@ -45,46 +47,51 @@ public class KaraokeController {
 
     @GetMapping("/{sessionCode}")
     public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode){
-        KaraokeSession session = service.getSession(sessionCode.toUpperCase());
+        KaraokeSession session = service.getSession(sessionCode);
         return ResponseEntity.ok(session);
     }
 
 @PostMapping("/{sessionCode}/queue")
     public ResponseEntity<Void> addSongToQueue(
         @PathVariable String sessionCode, 
-        @RequestBody AddSongRequestDTO request // DTO que agora contém o TÍTULO
+        @RequestBody AddSongRequestDTO request
     ) {
-        // O Service agora recebe o título da música
         service.addSongToQueue(
-            sessionCode.toUpperCase(), 
+            sessionCode,
             request.getSongTitle(),
             request.getUserId(), 
             request.getUserName()
         );
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/{sessionCode}")
     public ResponseEntity<Void> endSession(@PathVariable String sessionCode){
-        service.endSession(sessionCode.toUpperCase());
+        service.endSession(sessionCode);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{sessionCode}/queue/{queueItemId}")
-    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable String queueItemId){
-        service.deleteSongFromQueue(sessionCode.toUpperCase(), queueItemId);
+    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable Long queueItemId){
+        service.deleteSongFromQueue(sessionCode, queueItemId);
         return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(SessionNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleSessionNotFound(SessionNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    public String handleSessionNotFound(SessionNotFoundException ex) {
+        return ex.getMessage();
     }
 
     @ExceptionHandler(VideoNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND) // Ou HttpStatus.UNPROCESSABLE_ENTITY (422)
-    public ResponseEntity<String> handleVideoNotFound(VideoNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleVideoNotFound(VideoNotFoundException ex) {
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleIllegalArgument(IllegalArgumentException ex) {
+        return ex.getMessage();
     }
 }
