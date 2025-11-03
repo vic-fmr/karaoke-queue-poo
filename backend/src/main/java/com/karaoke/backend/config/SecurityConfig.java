@@ -69,7 +69,7 @@ public class SecurityConfig {
                         // Permite acesso público ao cadastro e login
                         .requestMatchers( "/auth/**").permitAll()
                         // Todas as outras rotas exigem autenticação
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

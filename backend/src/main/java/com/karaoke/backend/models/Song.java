@@ -14,7 +14,7 @@ public class Song {
 
     @Id
     private String songId;
-
+    private String youtubeVideoId;
     private String title;
     private String artist;
 

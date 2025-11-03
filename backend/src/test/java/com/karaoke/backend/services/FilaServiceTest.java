@@ -1,29 +1,33 @@
 package com.karaoke.backend.services;
 
 // Imports corretos
-import com.karaoke.backend.dtos.FilaUpdateDTO;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
+import com.karaoke.backend.dtos.FilaUpdateDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FilaServiceTest {
@@ -48,11 +52,13 @@ class FilaServiceTest {
         mockSession.setStatus(KaraokeSession.SessionStatus.PLAYING);
 
         User user1 = new User("user1", "João");
-        Song song1 = new Song("song1", "Musica 1", "Artista 1");
+        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
+        Song song1 = new Song("song1", "YOUTUBE_ID_1", "Musica 1", "Artista 1");
         item1 = new QueueItem("q1", user1, song1);
 
         User user2 = new User("user2", "Maria");
-        Song song2 = new Song("song2", "Musica 2", "Artista 2");
+        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
+        Song song2 = new Song("song2", "YOUTUBE_ID_2", "Musica 2", "Artista 2");
         item2 = new QueueItem("q2", user2, song2);
 
         List<QueueItem> songQueue = new ArrayList<>(List.of(item1, item2));
@@ -123,4 +129,3 @@ class FilaServiceTest {
         assertEquals("Sessão não encontrada.", exception.getMessage());
     }
 }
-

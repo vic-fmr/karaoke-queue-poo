@@ -4,6 +4,7 @@ import com.karaoke.backend.dtos.AddSongRequestDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.services.KaraokeService;
 import com.karaoke.backend.services.exception.SessionNotFoundException;
+import com.karaoke.backend.services.exception.VideoNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,13 +116,18 @@ public class KaraokeControllerTest {
     @Test
     @WithMockUser 
     void addSongToQueue_ShouldReturn200Ok() throws Exception {
+        final String SONG_TITLE = "Nome da Musica para Karaokê";
+        final String USER_ID = "user123";
+        final String USER_NAME = "João";
+        
+        // 1. Mock do comportamento do Service (ele não deve lançar exceção)
         doNothing().when(service).addSongToQueue(eq(SESSION_CODE), any(), any(), any());
 
+        // 2. Cria o DTO de Requisição usando o novo campo: songTitle
         AddSongRequestDTO requestDTO = new AddSongRequestDTO();
-        requestDTO.setYoutubeUrl("youtubeUrlExample");
-        requestDTO.setUserId("user123");
-        requestDTO.setUserName("João");
-        requestDTO.setSongId("song456");
+        requestDTO.setSongTitle(SONG_TITLE); // <-- MUDANÇA: SETA O TÍTULO
+        requestDTO.setUserId(USER_ID);
+        requestDTO.setUserName(USER_NAME);
 
         mockMvc.perform(post(BASE_URL + "/" + SESSION_CODE + "/queue")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -129,12 +135,46 @@ public class KaraokeControllerTest {
                         .with(csrf()))
                 .andExpect(status().isOk());
         
+        // 3. Verifica se o Service foi chamado com os argumentos CORRETOS
         verify(service, times(1)).addSongToQueue(
             eq(SESSION_CODE), 
-            eq(requestDTO.getYoutubeUrl()), 
-            eq(requestDTO.getUserId()), 
-            eq(requestDTO.getUserName())
+            eq(SONG_TITLE), // <-- MUDANÇA: Espera o TÍTULO aqui
+            eq(USER_ID), 
+            eq(USER_NAME)
         );
     }
+
+    @Test
+    @WithMockUser
+    void addSongToQueue_ShouldReturn404NotFound_WhenVideoIsNotValid() throws Exception {
+        final String SONG_TITLE = "Musica Invalida";
+        
+        // 1. Mock para simular a falha na busca/validação do vídeo
+        doThrow(new VideoNotFoundException("Vídeo não encontrado/incorporável."))
+                .when(service).addSongToQueue(eq(SESSION_CODE), any(), any(), any());
+
+        // 2. Cria o DTO de Requisição
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO();
+        requestDTO.setSongTitle(SONG_TITLE);
+        requestDTO.setUserId("user123");
+        requestDTO.setUserName("João");
+
+        // 3. Executa a requisição
+        mockMvc.perform(post(BASE_URL + "/" + SESSION_CODE + "/queue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO))
+                        .with(csrf()))
+                .andExpect(status().isNotFound()) // Espera 404 (do @ExceptionHandler)
+                .andExpect(content().string("Vídeo não encontrado/incorporável.")); // Verifica a mensagem de erro
+
+        // 4. Verifica se o Service foi chamado
+        verify(service, times(1)).addSongToQueue(
+            eq(SESSION_CODE), 
+            eq(SONG_TITLE), 
+            any(), 
+            any()
+        );
+    }
+
 }
 

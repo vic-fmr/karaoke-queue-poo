@@ -1,5 +1,14 @@
 package com.karaoke.backend.services;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;
@@ -9,13 +18,7 @@ import com.karaoke.backend.repositories.QueueItemRepository;
 import com.karaoke.backend.repositories.SongRepository;
 import com.karaoke.backend.repositories.UserRepository;
 import com.karaoke.backend.services.exception.SessionNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.karaoke.backend.services.exception.VideoNotFoundException;
 
 @Service
 public class KaraokeService {
@@ -35,6 +38,9 @@ public class KaraokeService {
     @Autowired
     private QueueItemRepository queueItemRepository;
 
+    @Autowired
+    private YoutubeService youTubeService;
+
     @Transactional
     public KaraokeSession createSession() {
         KaraokeSession newSession = new KaraokeSession();
@@ -45,14 +51,15 @@ public class KaraokeService {
     }
 
     @Transactional
-    public List<KaraokeSession> getAllSessions(){
+    public List<KaraokeSession> getAllSessions() {
         return sessionRepository.findAll();
     }
 
     @Transactional(readOnly = true)
     public KaraokeSession getSession(String accessCode) {
         return sessionRepository.findByAccessCode(accessCode.toUpperCase())
-                .orElseThrow(() -> new SessionNotFoundException("Sessão com código '" + accessCode + "' não encontrada."));
+                .orElseThrow(
+                        () -> new SessionNotFoundException("Sessão com código '" + accessCode + "' não encontrada."));
     }
 
     @Transactional
@@ -63,41 +70,64 @@ public class KaraokeService {
     }
 
     @Transactional
-    public void addSongToQueue(String accessCode, String youtubeUrl, String userId, String userName) {
+    public void addSongToQueue(String accessCode, String songTitle, String userId, String userName) {
         KaraokeSession session = getSession(accessCode);
 
+        // --- LÓGICA DE INTEGRAÇÃO COM YOUTUBE (PASSO NOVO) ---
 
-        // 1. Converte o userId (String) para Long ANTES de buscar
+        String searchQuery = songTitle + " karaoke";
+        List<YouTubeVideoDTO> validVideos = youTubeService.searchVideos(searchQuery);
+
+        if (validVideos.isEmpty()) {
+            if (validVideos.isEmpty()) {
+                throw new VideoNotFoundException(
+                        "Não foi encontrado um vídeo válido e incorporável do YouTube para a música: " + songTitle);
+            }
+        }
+
+        // Pega o primeiro resultado (o melhor e já validado)
+        YouTubeVideoDTO bestVideo = validVideos.get(0);
+
+        // --- LÓGICA DE USUÁRIO E PERSISTÊNCIA (EXISTENTE) ---
+
+        // 2. Converte o userId (String) para Long ANTES de buscar
         Long userIdAsLong;
         try {
             userIdAsLong = Long.parseLong(userId);
         } catch (NumberFormatException e) {
-            // Trate o erro: O ID recebido não é um número válido.
-            // Você pode lançar uma exceção customizada, retornar um erro, etc.
-            // Exemplo:
             throw new IllegalArgumentException("ID do usuário inválido: " + userId);
         }
 
-        // 2. Busca o usuário usando o ID Long
+        // 3. Busca/Cria o usuário
         User user = userRepository.findById(userIdAsLong).orElseGet(() -> {
-            // 3. Cria o novo usuário SEM definir o ID manualmente
-            //    (Assumindo que o construtor ou setters cuidam disso, e o ID é gerado pelo JPA)
-            User newUser = new User(); // Use o construtor apropriado ou setters
-            newUser.setUsername(userName); // Define o nome de usuário
-            // Defina outros campos se necessário (email, etc.)
-            
-            newUser.setSession(session); // Associa o novo usuário à sessão
+            User newUser = new User();
+            newUser.setUsername(userName);
+            newUser.setSession(session);
             return userRepository.save(newUser);
         });
-        Song song = new Song(UUID.randomUUID().toString(), "Titulo da música (do YouTube)", "Artista (do YouTube)");
+
+        // 4. Cria a Entidade Song com os dados OBTIDOS DO YOUTUBE
+        Song song = new Song(
+                UUID.randomUUID().toString(), // 1. songId (novo ID interno)
+                bestVideo.videoId(), // 2. youtubeVideoId (ID do YouTube)
+                bestVideo.title(), // 3. title (Título do YouTube)
+                "Artista Desconhecido" // 4. artist (Placeholder, pois a busca não retorna)
+        );
+
+        // **!!! IMPORTANTE: Você precisa que o campo youtubeVideoId exista na sua
+        // Entidade Song !!!**
+        song.setYoutubeVideoId(bestVideo.videoId()); // Adiciona o ID do vídeo para persistência
 
         songRepository.save(song);
 
+        // 5. Adiciona à Fila
         QueueItem queueItem = new QueueItem(UUID.randomUUID().toString(), user, song);
         session.addQueueItem(queueItem);
         sessionRepository.save(session);
+
         System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
 
+        // 6. Notifica o Front-end
         filaService.notificarAtualizacaoFila(accessCode);
     }
 
@@ -109,7 +139,8 @@ public class KaraokeService {
 
         if (itemOpt.isPresent()) {
             QueueItem itemToDelete = itemOpt.get();
-            // A sessão não precisa ser buscada explicitamente se a QueueItem não for bidirecionalmente mapeada com a sessão.
+            // A sessão não precisa ser buscada explicitamente se a QueueItem não for
+            // bidirecionalmente mapeada com a sessão.
             // Deletamos o QueueItem diretamente.
 
             session.deleteQueueItem(itemToDelete);
