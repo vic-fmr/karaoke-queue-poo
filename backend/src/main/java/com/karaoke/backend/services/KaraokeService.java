@@ -3,6 +3,7 @@ package com.karaoke.backend.services;
 import java.util.List;
 import java.util.Optional;
 
+import com.karaoke.backend.dtos.SessionResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,20 +16,18 @@ import com.karaoke.backend.models.User;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
 import com.karaoke.backend.repositories.QueueItemRepository;
 import com.karaoke.backend.repositories.SongRepository;
-import com.karaoke.backend.repositories.UserRepository;
-import com.karaoke.backend.services.exception.SessionNotFoundException;
-import com.karaoke.backend.services.exception.VideoNotFoundException;
+import com.karaoke.backend.exception.SessionNotFoundException;
+import com.karaoke.backend.exception.VideoNotFoundException;
 
 @RequiredArgsConstructor
 @Service
 public class KaraokeService {
 
     private final KaraokeSessionRepository sessionRepository;
-    private final SongRepository songRepository;
     private final FilaService filaService;
     private final QueueItemRepository queueItemRepository;
     private final YoutubeService youTubeService;
-    private final UserService userService;
+    private final SongService songService;
 
     @Transactional
     public KaraokeSession createSession() {
@@ -39,10 +38,28 @@ public class KaraokeService {
         return savedSession;
     }
 
+    // KaraokeService.java
     @Transactional
-    public List<KaraokeSession> getAllSessions() {
-        return sessionRepository.findAll();
+    public List<SessionResponseDTO> getAllSessions() {
+        return sessionRepository.findAll().stream()
+                // Mapeia cada entidade KaraokeSession para o DTO seguro
+                .map(this::mapToSessionResponseDTO)
+                .toList();
     }
+
+    // Crie um método de mapeamento no Service ou em uma classe Mapper
+    private SessionResponseDTO mapToSessionResponseDTO(KaraokeSession session) {
+        // Lógica para criar o DTO, garantindo que os dados do User sejam seguros.
+        // Exemplo:
+        return new SessionResponseDTO(
+                session.getId(),
+                session.getAccessCode(),
+                session.getStatus().name(),
+                session.getConnectedUsers().size(),
+                session.getSongQueue().stream().map(this::mapToQueueItemDTO).toList()
+        );
+    }
+// Certifique-se de que o QueueItemDTO também não expõe dados sensíveis do User.
 
     @Transactional(readOnly = true)
     public KaraokeSession getSession(String accessCode) {
@@ -59,7 +76,7 @@ public class KaraokeService {
     }
 
     @Transactional
-    public void addSongToQueue(String accessCode, String songTitle, String userId, String userName) {
+    public void addSongToQueue(String accessCode, String songTitle, User user) {
         KaraokeSession session = getSession(accessCode);
 
         // --- 1. LÓGICA DE INTEGRAÇÃO COM YOUTUBE ---
@@ -73,17 +90,12 @@ public class KaraokeService {
         YouTubeVideoDTO bestVideo = validVideos.getFirst();
 
         // --- 2. LÓGICA DE USUÁRIO ---
-        User user = userService.getOrCreateUser(userId, userName, session);
+        if (user.getSession() == null || !user.getSession().getId().equals(session.getId())) {
+            session.addUser(user); // Garante a associação bidirecional
+        }
 
         // --- 3. LÓGICA DE MÚSICA ---
-        Song song = new Song(
-                bestVideo.videoId(),
-                bestVideo.title(),
-                "Artista Desconhecido"
-        );
-
-        songRepository.save(song);
-        System.out.println("LOG: Nova música criada no banco: " + song.getTitle() + " (YouTube ID: " + song.getYoutubeVideoId() + ")");
+        Song song = songService.createSongFromVideo(bestVideo);
 
         // --- 4. ADICIONA À FILA ---
         QueueItem queueItem = new QueueItem(session, user, song);

@@ -1,4 +1,4 @@
-package com.karaoke.backend.services.exception;
+package com.karaoke.backend.exception;
 
 public class SessionNotFoundException extends RuntimeException {
 

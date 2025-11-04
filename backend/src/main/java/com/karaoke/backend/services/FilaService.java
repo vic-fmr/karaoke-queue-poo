@@ -22,8 +22,6 @@ public class FilaService {
     @Autowired
     private KaraokeSessionRepository sessionRepository; // Assumindo um Repository para obter a Sessão
     
-    // ... (Seu metodo adicionarMusica) ...
-    
     // Metodo que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
     public void notificarAtualizacaoFila(String accessCode) {
         

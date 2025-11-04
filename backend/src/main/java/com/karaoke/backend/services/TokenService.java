@@ -38,7 +38,7 @@ public class TokenService {
         Date expirationDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
-                .setSubject(user.getUsername()) // O que o token representa (o email)
+                .setSubject(user.getEmail()) // O que o token representa (o email)
                 .setIssuedAt(now) // Data de emissão
                 .setExpiration(expirationDate) // Data de expiração
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256) // Assina com a chave e algoritmo

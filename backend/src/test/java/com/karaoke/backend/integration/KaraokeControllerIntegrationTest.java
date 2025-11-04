@@ -150,10 +150,7 @@ class KaraokeControllerIntegrationTest {
         long userCountBefore = userRepository.count();
         long songCountBefore = songRepository.count();
 
-        AddSongRequestDTO requestDTO = new AddSongRequestDTO();
-        requestDTO.setSongTitle(SEARCH_QUERY);
-        requestDTO.setUserId(String.valueOf(testUser.getId()));
-        requestDTO.setUserName(testUser.getUsername());
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO(SEARCH_QUERY);
 
         mockMvc.perform(post(BASE_URL + "/" + accessCode.toUpperCase() + "/queue")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -182,10 +179,8 @@ class KaraokeControllerIntegrationTest {
         String newUserIdString = "999";
         String newUserName = "New User";
 
-        AddSongRequestDTO requestDTO = new AddSongRequestDTO();
-        requestDTO.setSongTitle(NEW_SONG_TITLE); // <-- MUDANÇA: Seta o Título
-        requestDTO.setUserId(newUserIdString);
-        requestDTO.setUserName(newUserName);
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO(NEW_SONG_TITLE);
+
 
         mockMvc.perform(post(BASE_URL + "/" + accessCode.toUpperCase() + "/queue")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -205,11 +200,8 @@ class KaraokeControllerIntegrationTest {
     void addSongToQueue_WithInvalidUserIdFormat_ShouldCauseIllegalArgumentException() {
         String accessCode = testSession.getAccessCode();
 
-        AddSongRequestDTO requestDTO = new AddSongRequestDTO();
-        // CORRIGIDO: Deve usar setSongTitle para a busca
-        requestDTO.setSongTitle("Música Qualquer");
-        requestDTO.setUserId("not-a-number");
-        requestDTO.setUserName("Bad User");
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO("Some Song Title");
+
 
         ServletException exception = assertThrows(ServletException.class, () -> {
             mockMvc.perform(post(BASE_URL + "/" + accessCode + "/queue")
@@ -245,17 +237,18 @@ class KaraokeControllerIntegrationTest {
 
         // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
         Song song = songRepository.save(new Song(
-                java.util.UUID.randomUUID().toString(),
                 "YouTube_ID_Fake", // <-- youtubeVideoId adicionado
                 "To Delete",
-                "Artist"));
+                "Artist",
+                "http://example.com/"
+                ));
 
         QueueItem item = queueItemRepository
-                .save(new QueueItem(java.util.UUID.randomUUID().toString(), testUser, song));
+                .save(new QueueItem(testSession, testUser, song));
         testSession.addQueueItem(item);
         sessionRepository.save(testSession);
 
-        String queueItemId = item.getQueueItemId();
+        Long queueItemId = item.getQueueItemId();
         long queueCountBefore = queueItemRepository.count();
 
         mockMvc.perform(delete(BASE_URL + "/" + accessCode.toUpperCase() + "/queue/" + queueItemId))

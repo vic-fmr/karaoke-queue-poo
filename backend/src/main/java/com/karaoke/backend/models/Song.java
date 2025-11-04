@@ -19,10 +19,12 @@ public class Song {
     private String youtubeVideoId;
     private String title;
     private String artist;
+    private String url;
 
-    public Song(String youtubeVideoId, String title, String artist) {
+    public Song(String youtubeVideoId, String title, String artist, String url) {
         this.youtubeVideoId = youtubeVideoId;
         this.title = title;
         this.artist = artist;
+        this.url = url;
     }
 }

@@ -1,37 +1,27 @@
 package com.karaoke.backend.services;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
+import com.karaoke.backend.exception.SessionNotFoundException;
+import com.karaoke.backend.exception.VideoNotFoundException;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
 import com.karaoke.backend.repositories.QueueItemRepository;
-import com.karaoke.backend.repositories.SongRepository;
-import com.karaoke.backend.repositories.UserRepository;
-import com.karaoke.backend.services.exception.SessionNotFoundException;
-import com.karaoke.backend.services.exception.VideoNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class KaraokeServiceTest {
@@ -39,182 +29,262 @@ class KaraokeServiceTest {
     @Mock
     private KaraokeSessionRepository sessionRepository;
     @Mock
-    private UserRepository userRepository;
-    @Mock
-    private SongRepository songRepository;
-    @Mock
     private FilaService filaService;
     @Mock
     private QueueItemRepository queueItemRepository;
     @Mock
-    private YoutubeService youTubeService; // <-- NOVO MOCK
+    private YoutubeService youTubeService;
+    @Mock
+    private SongService songService;
 
     @InjectMocks
     private KaraokeService karaokeService;
 
-    @Test
-    void createSession_ShouldSaveAndReturnSession() {
-        KaraokeSession session = new KaraokeSession();
-        session.setAccessCode("MOCKCODE"); 
-        
-        when(sessionRepository.save(any(KaraokeSession.class))).thenReturn(session);
+    // Dados de teste comuns
+    private KaraokeSession mockSession;
+    private final String ACCESS_CODE = "ABCD12";
 
+    @BeforeEach
+    void setUp() {
+        // Inicializa um mock de sessão para uso em vários testes
+        mockSession = new KaraokeSession();
+        mockSession.setId(1L);
+        mockSession.setAccessCode(ACCESS_CODE);
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Testes para createSession()
+    // -----------------------------------------------------------------------------------
+
+    @Test
+    void createSession_DeveCriarESalvarUmaNovaSessao() {
+        // Arrange
+        // Simula o salvamento e retorno de uma sessão com um ID/código gerado
+        when(sessionRepository.save(any(KaraokeSession.class))).thenReturn(mockSession);
+
+        // Act
         KaraokeSession result = karaokeService.createSession();
 
+        // Assert
         assertNotNull(result);
-        assertNotNull(result.getAccessCode());
+        assertEquals(mockSession.getId(), result.getId());
+        // Verifica se o método save do repository foi chamado exatamente uma vez
         verify(sessionRepository, times(1)).save(any(KaraokeSession.class));
     }
 
-    @Test
-    void getAllSessions_ShouldReturnListFromRepository() {
-        List<KaraokeSession> mockList = List.of(new KaraokeSession(), new KaraokeSession());
-        when(sessionRepository.findAll()).thenReturn(mockList);
+    // -----------------------------------------------------------------------------------
+    // Testes para getAllSessions()
+    // -----------------------------------------------------------------------------------
 
+    @Test
+    void getAllSessions_DeveRetornarTodasAsSessoes() {
+        // Arrange
+        List<KaraokeSession> expectedSessions = List.of(mockSession, new KaraokeSession());
+        when(sessionRepository.findAll()).thenReturn(expectedSessions);
+
+        // Act
         List<KaraokeSession> result = karaokeService.getAllSessions();
 
+        // Assert
+        assertNotNull(result);
         assertEquals(2, result.size());
+        assertEquals(expectedSessions, result);
         verify(sessionRepository, times(1)).findAll();
     }
 
+    // -----------------------------------------------------------------------------------
+    // Testes para getSession(String accessCode)
+    // -----------------------------------------------------------------------------------
+
     @Test
-    void getSession_ShouldReturnSession_WhenCodeIsValid() {
-        KaraokeSession session = new KaraokeSession();
-        when(sessionRepository.findByAccessCode("TEST1")).thenReturn(Optional.of(session));
+    void getSession_DeveRetornarSessao_QuandoEncontrada() {
+        // Arrange
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
 
-        KaraokeSession result = karaokeService.getSession("test1"); 
+        // Act
+        KaraokeSession result = karaokeService.getSession(ACCESS_CODE.toLowerCase()); // Testa a conversão para maiúsculas
 
+        // Assert
         assertNotNull(result);
-        verify(sessionRepository, times(1)).findByAccessCode("TEST1");
+        assertEquals(ACCESS_CODE, result.getAccessCode());
+        // Verifica se a busca foi feita com o código em MAIÚSCULAS
+        verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
     }
 
     @Test
-    void getSession_ShouldThrowException_WhenCodeIsInvalid() {
-        when(sessionRepository.findByAccessCode("BADCODE")).thenReturn(Optional.empty());
+    void getSession_DeveLancarSessionNotFoundException_QuandoNaoEncontrada() {
+        // Arrange
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.empty());
 
-        assertThrows(SessionNotFoundException.class, () -> {
-            karaokeService.getSession("BADCODE");
-        });
-        verify(sessionRepository, times(1)).findByAccessCode("BADCODE");
+        // Act & Assert
+        assertThrows(SessionNotFoundException.class, () -> karaokeService.getSession(ACCESS_CODE));
+        verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Testes para endSession(String accessCode)
+    // -----------------------------------------------------------------------------------
+
+    @Test
+    void endSession_DeveExcluirSessao_QuandoEncontrada() {
+        // Arrange
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
+
+        // Act
+        karaokeService.endSession(ACCESS_CODE);
+
+        // Assert
+        // Verifica se a sessão foi buscada
+        verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
+        // Verifica se o método delete foi chamado com a sessão correta
+        verify(sessionRepository, times(1)).delete(mockSession);
     }
 
     @Test
-    void addSongToQueue_ShouldCreateNewUser_WhenUserNotFound() {
-        KaraokeSession session = new KaraokeSession();
-        // CORRIGIDO: Song agora requer youtubeVideoId
-        Song newSong = new Song("song1", "YOUTUBE_ID_1", "Música de Teste", "Artista"); 
-        
-        Long userId = 1L; 
-        String userName = "João";
-        String accessCode = "TEST1";
-        final String SONG_TITLE = "Música de Teste"; // <-- ENTRADA DO USUÁRIO
+    void endSession_DeveLancarSessionNotFoundException_QuandoNaoEncontrada() {
+        // Arrange
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.empty());
 
-        // Mock do YouTubeService (Simula sucesso na busca)
-        YouTubeVideoDTO mockVideo = new YouTubeVideoDTO("YOUTUBE_ID_1", "Música de Teste", true);
-        when(youTubeService.searchVideos(eq(SONG_TITLE + " karaoke"))).thenReturn(List.of(mockVideo));
-        
-        // Mocks de Persistência
-        when(sessionRepository.findByAccessCode(accessCode)).thenReturn(Optional.of(session));
-        when(userRepository.findById(eq(userId))).thenReturn(Optional.empty()); 
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User userToSave = invocation.getArgument(0);
-            userToSave.setId(userId);
-            return userToSave;
-        });
-        when(songRepository.save(any(Song.class))).thenReturn(newSong); 
-        when(sessionRepository.save(session)).thenReturn(session);
-        doNothing().when(filaService).notificarAtualizacaoFila(accessCode);
-
-        // CORRIGIDO: Passando o SONG_TITLE
-        karaokeService.addSongToQueue(accessCode, SONG_TITLE, String.valueOf(userId), userName); 
-
-        verify(youTubeService, times(1)).searchVideos(eq(SONG_TITLE + " karaoke"));
-        verify(userRepository, times(1)).findById(eq(userId)); 
-        verify(userRepository, times(1)).save(any(User.class));
-        verify(songRepository, times(1)).save(any(Song.class));
-        verify(sessionRepository, times(1)).save(session);
-        verify(filaService, times(1)).notificarAtualizacaoFila(accessCode);
-    }
-    
-    @Test
-    void addSongToQueue_ShouldUseExistingUser_WhenUserIsFound() {
-        KaraokeSession session = new KaraokeSession();
-        Long existingUserId = 2L;
-        User existingUser = new User();
-        existingUser.setId(existingUserId);
-        existingUser.setUsername("Maria");
-        
-        String accessCode = "TEST2";
-        final String SONG_TITLE = "Outra Música";
-        String userName = "Maria";
-        
-        // Mock do YouTubeService
-        YouTubeVideoDTO mockVideo = new YouTubeVideoDTO("YOUTUBE_ID_2", SONG_TITLE, true);
-        when(youTubeService.searchVideos(eq(SONG_TITLE + " karaoke"))).thenReturn(List.of(mockVideo));
-
-        // Mocks da Persistência
-        when(sessionRepository.findByAccessCode(accessCode)).thenReturn(Optional.of(session));
-        when(userRepository.findById(eq(existingUserId))).thenReturn(Optional.of(existingUser)); 
-        when(songRepository.save(any(Song.class))).thenReturn(new Song()); // Necessário para simular o save
-        when(sessionRepository.save(session)).thenReturn(session); // Necessário para simular o save
-        doNothing().when(filaService).notificarAtualizacaoFila(accessCode);
-
-
-        // CORRIGIDO: Passando o SONG_TITLE
-        karaokeService.addSongToQueue(accessCode, SONG_TITLE, String.valueOf(existingUserId), userName);
-
-        verify(youTubeService, times(1)).searchVideos(eq(SONG_TITLE + " karaoke"));
-        verify(userRepository, times(1)).findById(eq(existingUserId)); 
-        verify(userRepository, never()).save(any(User.class));
-        verify(songRepository, times(1)).save(any(Song.class));
-        verify(filaService, times(1)).notificarAtualizacaoFila(accessCode);
-    }
-    
-    @Test
-    void addSongToQueue_ShouldThrowVideoNotFoundException_WhenNoVideoIsFound() {
-        KaraokeSession session = new KaraokeSession();
-        String accessCode = "TEST3";
-        String songTitle = "Musica Inexistente";
-        
-        // Mock: Simula o YouTubeService retornando uma lista vazia
-        when(sessionRepository.findByAccessCode(accessCode)).thenReturn(Optional.of(session));
-        when(youTubeService.searchVideos(eq(songTitle + " karaoke"))).thenReturn(List.of());
-
-        // Verifica se a exceção é lançada
-        assertThrows(VideoNotFoundException.class, () -> {
-            karaokeService.addSongToQueue(accessCode, songTitle, "10", "Teste");
-        });
-
-        // Verificações: Garante que nada foi salvo
-        verify(youTubeService, times(1)).searchVideos(anyString());
-        verify(userRepository, never()).findById(anyLong()); 
-        verify(songRepository, never()).save(any(Song.class));
-        verify(sessionRepository, never()).save(any(KaraokeSession.class));
+        // Act & Assert
+        assertThrows(SessionNotFoundException.class, () -> karaokeService.endSession(ACCESS_CODE));
+        // Verifica que o delete NUNCA foi chamado
+        verify(sessionRepository, never()).delete(any(KaraokeSession.class));
     }
 
+    // -----------------------------------------------------------------------------------
+    // Testes para addSongToQueue(String accessCode, String songTitle, User user)
+    // -----------------------------------------------------------------------------------
+
     @Test
-    void deleteSongFromQueue_ShouldRemoveItemAndNotify() {
-        KaraokeSession session = new KaraokeSession();
+    void addSongToQueue_DeveAdicionarMusicaAFilaComSucesso() {
+        // Arrange
+        String songTitle = "Test Song";
         User mockUser = new User();
-        mockUser.setUsername("Temp User");
-        
-        // CORRIGIDO: Song agora requer youtubeVideoId
-        Song mockSong = new Song("tempSongId", "TEMP_YOUTUBE_ID", "Temp Song", "Temp Artist");
-        
-        String queueItemId = "q1"; 
-        QueueItem item = new QueueItem(queueItemId, mockUser, mockSong); 
-        
-        String accessCode = "TEST1";
+        mockUser.setId(10L);
+        YouTubeVideoDTO mockVideo = new YouTubeVideoDTO("videoId", "Title", true);
+        Song mockSong = new Song();
+        mockSong.setTitle(songTitle);
 
-        when(sessionRepository.findByAccessCode(accessCode)).thenReturn(Optional.of(session));
-        when(queueItemRepository.findById(queueItemId)).thenReturn(Optional.of(item)); 
-        doNothing().when(queueItemRepository).delete(item);
-        doNothing().when(filaService).notificarAtualizacaoFila(accessCode);
+        // 1. Mock do getSession()
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
+        // 2. Mock da busca no YouTube
+        when(youTubeService.searchVideos(anyString())).thenReturn(List.of(mockVideo));
+        // 3. Mock da criação da música
+        when(songService.createSongFromVideo(mockVideo)).thenReturn(mockSong);
+        // 4. Mock do salvamento da sessão (para verificar a chamada)
+        when(sessionRepository.save(any(KaraokeSession.class))).thenReturn(mockSession);
 
-        karaokeService.deleteSongFromQueue(accessCode, queueItemId);
+        // Act
+        karaokeService.addSongToQueue(ACCESS_CODE, songTitle, mockUser);
 
-        verify(queueItemRepository, times(1)).findById(queueItemId);
-        verify(queueItemRepository, times(1)).delete(item);
-        verify(filaService, times(1)).notificarAtualizacaoFila(accessCode);
+        // Assert
+        // Verifica se a sessão foi buscada
+        verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
+        // Verifica se a busca no YouTube foi chamada com o termo correto
+        verify(youTubeService, times(1)).searchVideos(songTitle + " karaoke");
+        // Verifica se o usuário foi adicionado à sessão (pois mockUser não tem sessão setada)
+        assertTrue(mockSession.getConnectedUsers().contains(mockUser));
+        // Verifica se o item foi adicionado à fila
+        assertEquals(1, mockSession.getSongQueue().size());
+        // Verifica se a sessão foi salva (persiste a fila e o usuário)
+        verify(sessionRepository, times(1)).save(mockSession);
+        // Verifica se a notificação foi enviada
+        verify(filaService, times(1)).notificarAtualizacaoFila(ACCESS_CODE);
+    }
+
+    @Test
+    void addSongToQueue_DeveLancarVideoNotFoundException_QuandoNenhumVideoValidoEncontrado() {
+        // Arrange
+        String songTitle = "Test Song";
+        User mockUser = new User();
+
+        // 1. Mock do getSession()
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
+        // 2. Mock da busca no YouTube (retorna lista vazia)
+        when(youTubeService.searchVideos(anyString())).thenReturn(Collections.emptyList());
+
+        // Act & Assert
+        assertThrows(VideoNotFoundException.class,
+                () -> karaokeService.addSongToQueue(ACCESS_CODE, songTitle, mockUser));
+
+        // Assertions de verificação
+        verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
+        verify(youTubeService, times(1)).searchVideos(songTitle + " karaoke");
+        // Verifica que NENHUMA outra operação aconteceu
+        verify(songService, never()).createSongFromVideo(any());
+        verify(sessionRepository, never()).save(any());
+        verify(filaService, never()).notificarAtualizacaoFila(anyString());
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Testes para deleteSongFromQueue(String accessCode, Long queueItemId)
+    // -----------------------------------------------------------------------------------
+
+    @Test
+    void deleteSongFromQueue_DeveRemoverItemDaFila_QuandoExistente() {
+        // Arrange
+        Long queueItemId = 99L;
+        QueueItem mockItem = new QueueItem(mockSession, new User(), new Song());
+        mockItem.setQueueItemId(queueItemId);
+
+        // Garante que a sessão contenha o item para simular a lógica
+        mockSession.addQueueItem(mockItem);
+
+        // 1. Mock do getSession()
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
+        // 2. Mock da busca do QueueItem
+        when(queueItemRepository.findById(queueItemId)).thenReturn(Optional.of(mockItem));
+
+        // Act
+        karaokeService.deleteSongFromQueue(ACCESS_CODE, queueItemId);
+
+        // Assert
+        // Verifica que o item foi removido da lista da sessão (a lógica está no método deleteQueueItem)
+        assertFalse(mockSession.getSongQueue().contains(mockItem));
+        // Verifica se a notificação foi enviada (que é chamada no final, independentemente da exclusão)
+        verify(filaService, times(1)).notificarAtualizacaoFila(ACCESS_CODE);
+        // O item é removido implicitamente quando a sessão é salva novamente, mas o seu serviço
+        // não tem um `sessionRepository.save()`. Como o método é `@Transactional`,
+        // a exclusão na coleção `session.deleteQueueItem(itemToDelete);` será persistida.
+        // O mais importante é verificar a notificação e a manipulação da coleção.
+    }
+
+    @Test
+    void deleteSongFromQueue_NaoDeveRemoverNemLancarErro_QuandoItemNaoExistente() {
+        // Arrange
+        Long nonExistingId = 999L;
+
+        // 1. Mock do getSession()
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
+        // 2. Mock da busca do QueueItem (retorna vazio)
+        when(queueItemRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        // Act
+        karaokeService.deleteSongFromQueue(ACCESS_CODE, nonExistingId);
+
+        // Assert
+        // Verifica que a notificação foi enviada (que é chamada no final)
+        verify(filaService, times(1)).notificarAtualizacaoFila(ACCESS_CODE);
+        // Verifica que o método do repositório foi chamado
+        verify(queueItemRepository, times(1)).findById(nonExistingId);
+        // A lógica de remoção interna da sessão não será chamada
+        // O teste deve garantir que NENHUM erro foi lançado
+    }
+
+    @Test
+    void deleteSongFromQueue_DeveLancarSessionNotFoundException_QuandoSessaoNaoEncontrada() {
+        // Arrange
+        Long queueItemId = 99L;
+
+        // 1. Mock do getSession() (lança exceção)
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(SessionNotFoundException.class,
+                () -> karaokeService.deleteSongFromQueue(ACCESS_CODE, queueItemId));
+
+        // Assertions de verificação: Se a sessão não for encontrada, o resto não é chamado
+        verify(queueItemRepository, never()).findById(anyLong());
+        verify(filaService, never()).notificarAtualizacaoFila(anyString());
     }
 }
