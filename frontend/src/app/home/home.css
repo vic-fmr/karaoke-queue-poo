@@ -1,0 +1,6 @@
+.home-container{max-width:520px;margin:40px auto;padding:20px;border:1px solid #eee;border-radius:8px;text-align:center}
+.input-row{display:flex;gap:8px;justify-content:center;margin-top:12px}
+input[type=text]{flex:1;padding:8px;border:1px solid #ccc;border-radius:4px}
+button{padding:8px 12px;border:none;background:#3f51b5;color:#fff;border-radius:4px;cursor:pointer}
+.error{color:#b00020;margin-top:10px}
+

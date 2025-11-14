@@ -1,0 +1,15 @@
+.session-container{max-width:900px;margin:20px auto;padding:16px}
+.now-playing{border:1px solid #eee;padding:12px;border-radius:6px;background:#fafafa}
+.current .title{font-weight:700}
+.add-song{margin-top:14px}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;padding:8px;border:1px solid #ccc;border-radius:4px}
+.add-row button{padding:8px 12px;border:none;background:#4caf50;color:#fff;border-radius:4px}
+.queue{margin-top:16px}
+.song-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee}
+.song-item.mine{background:linear-gradient(90deg, rgba(255,244,229,1) 0%, rgba(255,250,240,1) 100%)}
+.song-item .meta .title{font-weight:600}
+.song-item .by{font-size:0.9rem;color:#555}
+.actions .remove{background:transparent;border:none;color:#b00020;cursor:pointer;font-size:1.1rem}
+.error{color:#b00020;margin-top:8px}
+
