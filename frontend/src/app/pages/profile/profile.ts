@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { User } from '../user';
+import { UserService } from '../../services/UserService';
 
 @Component({
   selector: 'app-profile',
@@ -16,7 +16,7 @@ export class Profile implements OnInit { // <--- Nome 'Profile' e implementa OnI
   userHandle: string = '';
 
   // Injeta o serviço
-  constructor(private userService: User) {}
+  constructor(private userService: UserService) {}
   
   // Esta função roda quando o componente carrega
   ngOnInit(): void {

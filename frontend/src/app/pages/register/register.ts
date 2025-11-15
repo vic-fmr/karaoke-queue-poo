@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { User } from '../user';
-import {AuthService} from '../services/AuthService';
+import { UserService } from '../../services/UserService';
+import { AuthService } from '../../services/AuthService';
 
 @Component({
   selector: 'app-register',
@@ -17,7 +17,7 @@ export class Register { // <--- Nome da classe é 'Register'
   // Injeta o Router e o UserService
   constructor(
     private router: Router,
-    private userService: User,
+    private userService: UserService,
     private authService: AuthService
   ) {}
 
@@ -39,7 +39,7 @@ export class Register { // <--- Nome da classe é 'Register'
         next: () => {
           // opcional: auto-login após cadastro
           this.authService.login(email, password).subscribe({
-            next: () => this.router.navigate(['/profile']),
+            next: () => this.router.navigate(['/home']),
             error: () => this.router.navigate(['/login'])
           });
         },

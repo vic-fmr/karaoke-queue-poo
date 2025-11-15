@@ -1,8 +1,5 @@
 package com.karaoke.backend.services;
 
-
-
-
 import com.karaoke.backend.models.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -14,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class TokenService {

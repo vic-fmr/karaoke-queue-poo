@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.karaoke.backend.dtos.FilaUpdateDTO;
 import com.karaoke.backend.dtos.QueueItemDTO;
 import com.karaoke.backend.models.KaraokeSession;
-import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
 
 import java.util.List;
@@ -20,23 +19,20 @@ public class FilaService {
     @Autowired
     private SimpMessagingTemplate template;
     @Autowired
-    private KaraokeSessionRepository sessionRepository; // Assumindo um Repository para obter a Sessão
-    
-    // ... (Seu metodo adicionarMusica) ...
-    
-    // Metodo que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
+    private KaraokeSessionRepository sessionRepository;
+
     public void notificarAtualizacaoFila(String accessCode) {
-        
-        // 1. Busque a sessão completa (com a lista de QueueItem já ordenada pelo @OrderBy no seu modelo)
+
+        // 1. Recupera a sessão do karaokê pelo accessCode
         KaraokeSession session = sessionRepository.findByAccessCode(accessCode)
             .orElseThrow(() -> new RuntimeException("Sessão não encontrada."));
         
-        // 2. Mapeie a lista de entidades para DTOs
+        // 2. Mapeia a lista de entidades para DTOs
         List<QueueItemDTO> dtoList = session.getSongQueue().stream()
             .map(QueueItemDTO::fromEntity)
             .collect(Collectors.toList());
 
-        // 3. Crie o DTO de Envelope (FilaUpdateDTO)
+        // 3. Cria o DTO de Envelope (FilaUpdateDTO)
         // Lógica de "nowPlaying": Para começar, é o primeiro item da lista (ou null se vazia)
         QueueItemDTO nowPlayingDTO = dtoList.isEmpty() ? null : dtoList.get(0);
 

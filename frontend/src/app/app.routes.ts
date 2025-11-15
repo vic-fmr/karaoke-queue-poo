@@ -1,20 +1,19 @@
 import { Routes } from '@angular/router';
-import { Login } from './login/login';
-import { Register } from './register/register';
-import { Profile } from './profile/profile';
-import { HomeComponent } from './home/home';
+import { Login } from './pages/login/login';
+import { Register } from './pages/register/register';
+import { Profile } from './pages/profile/profile';
+import { Home } from './pages/home/home';
 import { SessionComponent } from './session/session';
 import { sessionGuard } from './guards/session.guard';
+import { WelcomePage } from './pages/welcome-page/welcome-page';
 
 export const routes: Routes = [
+  { path: '', component: WelcomePage },
+  { path: 'home', component: Home},
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'profile', component: Profile },
-
-  // New routes for Karaoke app
-  { path: '', component: HomeComponent },
   { path: 'session/:id', component: SessionComponent, canActivate: [sessionGuard] },
 
-  // fallback to home
   { path: '**', redirectTo: '' }
 ];

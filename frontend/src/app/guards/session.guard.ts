@@ -7,10 +7,12 @@ export const sessionGuard: CanActivateFn = (route) => {
   const router = inject(Router);
   const ks = inject(KaraokeService);
   const id = route.paramMap.get('id') || '';
+
   if (!id) {
     router.navigate(['/']);
     return false;
   }
+  
   return ks.validateSession(id).pipe(
     map(valid => {
       if (!valid) router.navigate(['/']);

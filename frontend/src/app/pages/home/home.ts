@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { KaraokeService } from '../services/KaraokeService';
+import { KaraokeService } from '../../services/KaraokeService';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +11,7 @@ import { KaraokeService } from '../services/KaraokeService';
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
-export class HomeComponent {
+export class Home {
   sessionId = new FormControl('', [Validators.required]);
   error: string | null = null;
 
