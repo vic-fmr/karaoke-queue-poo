@@ -1,30 +1,34 @@
-import {Component, OnDestroy} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import {ActivatedRoute} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {KaraokeService, Song} from '../../services/KaraokeService';
+import { Component, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { KaraokeService, Song } from '../../services/KaraokeService';
 
 @Component({
   selector: 'app-session',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './session.html',
-  styleUrls: ['./session.css']
+  styleUrls: ['./session.css'],
 })
 export class SessionComponent implements OnDestroy {
-  sessionId: string | null = null;
+  sessionCode: string | null = null;
   userName = 'Você';
-  connectedUsers = [{
-    id: 1,
-    name: 'Host'
-  }, {
-    id: 2,
-    name: 'Alice'
-  }, {
-    id: 3,
-    name: 'Bob'
-  }]
+  connectedUsers = [
+    {
+      id: 1,
+      name: 'Host',
+    },
+    {
+      id: 2,
+      name: 'Alice',
+    },
+    {
+      id: 3,
+      name: 'Bob',
+    },
+  ];
 
   queue: Song[] = [];
   current: Song | null = null;
@@ -35,13 +39,15 @@ export class SessionComponent implements OnDestroy {
   private sub = new Subscription();
 
   constructor(private route: ActivatedRoute, private ks: KaraokeService) {
-    this.sessionId = this.route.snapshot.paramMap.get('id');
+    this.sessionCode = this.route.snapshot.paramMap.get('id');
 
-    this.sub.add(this.ks.getQueue().subscribe(list => {
-      this.queue = list;
-    }));
+    this.sub.add(
+      this.ks.getQueue().subscribe((list) => {
+        this.queue = list;
+      })
+    );
 
-    this.sub.add(this.ks.getCurrentSong().subscribe(c => this.current = c));
+    this.sub.add(this.ks.getCurrentSong().subscribe((c) => (this.current = c)));
   }
 
   ngOnDestroy(): void {
@@ -60,14 +66,14 @@ export class SessionComponent implements OnDestroy {
       next: () => {
         this.urlToAdd = '';
       },
-      error: err => {
+      error: (err) => {
         this.addError = err?.message || 'Erro ao adicionar.';
-      }
+      },
     });
   }
 
   removeSong(songId: string) {
-    this.ks.removeSong(songId).subscribe(ok => {
+    this.ks.removeSong(songId).subscribe((ok) => {
       // opcional: mostrar feedback
     });
   }
@@ -78,8 +84,6 @@ export class SessionComponent implements OnDestroy {
 
   // items except current
   get pendingQueue() {
-    return this.queue.filter(s => !s.isCurrent);
+    return this.queue.filter((s) => !s.isCurrent);
   }
-
 }
-
