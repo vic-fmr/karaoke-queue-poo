@@ -3,7 +3,7 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { Profile } from './pages/profile/profile';
 import { Home } from './pages/home/home';
-import { SessionComponent } from './session/session';
+import {SessionComponent} from './pages/session/session';
 import { sessionGuard } from './guards/session.guard';
 import { WelcomePage } from './pages/welcome-page/welcome-page';
 

@@ -29,7 +29,7 @@ export class Login { // <--- Nome da classe é 'Login'
 
     // Usa "email" como username (ajuste se backend usa outro campo)
     this.authService.login(email, password).subscribe({
-      next: () => this.router.navigate(['/profile']),
+      next: () => this.router.navigate(['/home']),
       error: err => {
         console.error('Erro login', err);
         // mostrar mensagem ao usuário (implemente UI)

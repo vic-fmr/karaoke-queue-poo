@@ -1,9 +1,9 @@
-import { Component, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { KaraokeService, Song } from '../services/KaraokeService';
+import {Component, OnDestroy} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {ActivatedRoute} from '@angular/router';
+import {Subscription} from 'rxjs';
+import {KaraokeService, Song} from '../../services/KaraokeService';
 
 @Component({
   selector: 'app-session',
@@ -14,7 +14,17 @@ import { KaraokeService, Song } from '../services/KaraokeService';
 })
 export class SessionComponent implements OnDestroy {
   sessionId: string | null = null;
-  userName = 'Você'; // simulação de usuário logado
+  userName = 'Você';
+  connectedUsers = [{
+    id: 1,
+    name: 'Host'
+  }, {
+    id: 2,
+    name: 'Alice'
+  }, {
+    id: 3,
+    name: 'Bob'
+  }]
 
   queue: Song[] = [];
   current: Song | null = null;
@@ -27,7 +37,6 @@ export class SessionComponent implements OnDestroy {
   constructor(private route: ActivatedRoute, private ks: KaraokeService) {
     this.sessionId = this.route.snapshot.paramMap.get('id');
 
-    // subscrever fila
     this.sub.add(this.ks.getQueue().subscribe(list => {
       this.queue = list;
     }));
@@ -71,5 +80,6 @@ export class SessionComponent implements OnDestroy {
   get pendingQueue() {
     return this.queue.filter(s => !s.isCurrent);
   }
+
 }
 

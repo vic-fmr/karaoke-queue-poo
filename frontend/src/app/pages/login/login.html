@@ -1,30 +1,30 @@
-<main class="auth-container">
+<main class="auth-container" animate.enter="enter-animation" animate.leave="leave-animation">
     <header>
       <span class="material-symbols-outlined icon">
         person
       </span>
-      <h1>QueueUP</h1>
-      <p>Welcome back! Please log in.</p>
+      <h1>KaraQ</h1>
+      <p>Bem vindo de volta!</p>
     </header>
-  
+
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      
+
       <div class="form-group">
-        <label for="email">Email address</label>
-        <input id="email" type="email" placeholder="Enter your email" formControlName="email">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="Insira um email..." formControlName="email">
       </div>
-  
+
       <div class="form-group">
-        <label for="password">Password</label>
-        <input id="password" type="password" placeholder="Enter your password" formControlName="password">
+        <label for="password">Senha</label>
+        <input id="password" type="password" placeholder="Insira sua senha" formControlName="password">
       </div>
-  
+
       <button type="submit" class="cta-button" [disabled]="!loginForm.valid">
-        Log In
+        Entrar
       </button>
     </form>
-  
+
     <footer class="auth-link">
-      <p>Don't have an account? <a routerLink="/register">Sign up</a></p>
+      <p>Não tem uma conta?<a routerLink="/register"> git pCadastre-se</a></p>
     </footer>
   </main>

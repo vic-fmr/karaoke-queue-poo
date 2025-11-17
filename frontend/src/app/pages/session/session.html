@@ -1,0 +1,62 @@
+<div class="session-container">
+  <header>
+    <h2>Sessão: {{ sessionId }}</h2>
+  </header>
+
+  <section class="now-playing">
+    <h3>🎵 Tocando Agora</h3>
+
+    @if (current) {
+      <div class="current">
+        <div class="title">{{ current.titulo }}</div>
+        <div class="by">Adicionado por: {{ current.adicionadoPor }}</div>
+      </div>
+    } @else {
+      <ng-template #noCurrent>
+        <div class="none">Nenhuma música tocando.</div>
+      </ng-template>
+    }
+  </section>
+
+  <section class="add-song">
+    <h4>Adicionar à fila</h4>
+    <div class="add-row">
+      <input type="text" [(ngModel)]="urlToAdd" placeholder="URL do YouTube"/>
+      <button (click)="addSong()">Adicionar à Fila</button>
+    </div>
+    @if (addError) {
+      <div class="error">{{ addError }}</div>
+    }
+  </section>
+
+  <section class="queue">
+    <h4>Fila</h4>
+    <ol>
+      @for (song of queue; track song.id) {
+        <li>
+          <div class="song-item" [class.mine]="isAddedByMe(song)">
+            <div class="meta">
+              <div class="title">{{ song.titulo }}</div>
+              <div class="by">{{ song.adicionadoPor }}</div>
+            </div>
+            <div class="actions">
+              @if (isAddedByMe(song)) {
+                <button class="remove" (click)="removeSong(song.id)">🗑️</button>
+              }
+            </div>
+          </div>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <section class="connected-users-container">
+    <h4>Usuários Conectados</h4>
+    <ul>
+      @for (user of connectedUsers; track user.id) {
+        <li>{{ user.name }}</li>
+      }
+    </ul>
+  </section>
+</div>
+
