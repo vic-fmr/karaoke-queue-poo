@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import {Router, RouterLink} from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { KaraokeService } from '../../services/KaraokeService';
 
 @Component({
@@ -9,7 +9,7 @@ import { KaraokeService } from '../../services/KaraokeService';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './home.html',
-  styleUrls: ['./home.css']
+  styleUrls: ['./home.css'],
 })
 export class Home {
   sessionId = new FormControl('', [Validators.required]);
@@ -25,7 +25,7 @@ export class Home {
       return;
     }
 
-    this.ks.validateSession(id).subscribe(valid => {
+    this.ks.getSession(id).subscribe((valid) => {
       if (valid) {
         this.router.navigate(['/session', id]);
       } else {
@@ -34,4 +34,3 @@ export class Home {
     });
   }
 }
-

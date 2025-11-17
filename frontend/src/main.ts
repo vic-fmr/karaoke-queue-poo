@@ -1,5 +1,5 @@
-// TypeScript
-// File: frontend/src/main.ts
+import './polyfills'; // Adicione esta linha no topo
+
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -13,8 +13,8 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
-  ]
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  ],
 })
   .then(() => console.log('[main.ts] Bootstrap concluído com sucesso'))
   .catch((err) => {

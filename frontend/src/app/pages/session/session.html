@@ -45,11 +45,15 @@
     <div class="content-sidebar">
       <section class="connected-users-container">
         <h4>Usuários Conectados</h4>
+        @if (connectedUsers().length !== 0) {
         <ul>
-          @for (user of connectedUsers; track user.id) {
+          @for (user of connectedUsers(); track user.id) {
           <li>{{ user.name }}</li>
           }
         </ul>
+        } @else {
+        <div class="none">Nenhum usuário conectado.</div>
+        }
       </section>
 
       <section class="add-song">
