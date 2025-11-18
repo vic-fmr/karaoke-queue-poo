@@ -7,7 +7,6 @@ import { KaraokeService, Song, AddSongRequest } from '../../services/KaraokeServ
 import { WebSocketService } from '../../services/WebSocketService';
 import { AuthService } from '../../services/AuthService';
 
-// Interface para representar um usuário conectado
 interface ConnectedUser {
   id: string;
   name: string;
@@ -43,10 +42,8 @@ export class Session implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Obtém o usuário autenticado
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser) {
-      // Se não houver usuário autenticado, redireciona para login
       this.router.navigate(['/login']);
       return;
     }
@@ -60,12 +57,14 @@ export class Session implements OnInit, OnDestroy {
       return;
     }
 
-    // Inicializa com o usuário atual
     this.connectedUsers.set([{ id: this.userId, name: this.userName }]);
 
     // 1. Busca o estado inicial da sessão via REST
     const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe({
-      next: (session) => this.updateSessionState(session),
+      next: (session) => {
+        this.queue = session.queue;
+        this.current = session.currentSong;
+      },
       error: (err) => {
         console.error('Erro ao carregar sessão', err);
         this.addError = 'Não foi possível carregar a sessão.';
@@ -75,16 +74,14 @@ export class Session implements OnInit, OnDestroy {
 
     // 2. Conecta ao WebSocket e se inscreve para atualizações em tempo real
     this.webSocketService.connect(this.sessionCode);
-    const wsSub = this.webSocketService.sessionUpdates$.subscribe((sessionState) => {
-      console.log('Recebida atualização via WebSocket:', sessionState);
-      this.updateSessionState(sessionState);
+    const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate) => {
+      console.log('[Session] Recebida atualização via WebSocket:', filaUpdate);
+
+      // Atualiza a fila e a música atual com base no FilaUpdateDTO
+      this.queue = filaUpdate.queue;
+      this.current = filaUpdate.nowPlaying;
     });
     this.subscriptions.add(wsSub);
-  }
-
-  private updateSessionState(session: { queue: Song[]; currentSong: Song | null }) {
-    this.queue = session.queue;
-    this.current = session.currentSong;
   }
 
   ngOnDestroy(): void {
@@ -105,10 +102,11 @@ export class Session implements OnInit, OnDestroy {
     const addSub = this.karaokeService.addSong(this.sessionCode, request).subscribe({
       next: () => {
         this.urlToAdd = '';
+        console.log('[Session] Música adicionada com sucesso');
       },
       error: (err) => {
         this.addError = err?.error || 'Erro ao adicionar música.';
-        console.error(err);
+        console.error('[Session] Erro ao adicionar música:', err);
       },
     });
     this.subscriptions.add(addSub);
@@ -118,8 +116,11 @@ export class Session implements OnInit, OnDestroy {
     if (!this.sessionCode) return;
 
     const removeSub = this.karaokeService.removeSong(this.sessionCode, songId).subscribe({
+      next: () => {
+        console.log('[Session] Música removida com sucesso');
+      },
       error: (err) => {
-        console.error('Erro ao remover música', err);
+        console.error('[Session] Erro ao remover música', err);
       },
     });
     this.subscriptions.add(removeSub);
