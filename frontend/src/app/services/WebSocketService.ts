@@ -1,13 +1,20 @@
-import { Injectable } from '@angular/core';
-import { Client, IMessage } from '@stomp/stompjs';
+import {Injectable} from '@angular/core';
+import {Client, IMessage} from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Observable, Subject } from 'rxjs';
+import {Observable, Subject} from 'rxjs';
 
 // Interface que corresponde ao FilaUpdateDTO do backend
+export interface QueueItemDTO {
+  songTitle: string;
+  youtubeLink: string;
+  addedByUserName: string;
+  queueItemId: number;
+}
+
 export interface FilaUpdate {
-  queue: any[];
-  nowPlaying: any | null;
-  status: string;
+  songQueue: QueueItemDTO[];
+  nowPlaying: QueueItemDTO | null;
+  sessionStatus: string;
 }
 
 @Injectable({
@@ -43,14 +50,13 @@ export class WebSocketService {
     this.client.onConnect = (frame) => {
       console.log('[WebSocket] ✓ Conectado com sucesso!', frame);
 
-      // CORREÇÃO: usar o tópico correto /topic/fila/{accessCode}
       const topic = `/topic/fila/${sessionCode}`;
       console.log(`[WebSocket] Inscrevendo-se no tópico: ${topic}`);
 
       this.client.subscribe(topic, (message: IMessage) => {
         console.log('[WebSocket] ✓ Mensagem recebida:', message.body);
         try {
-          const filaUpdate: FilaUpdate = JSON.parse(message.body);
+          const filaUpdate = JSON.parse(message.body) as FilaUpdate;
           console.log('[WebSocket] Estado da fila:', filaUpdate);
           this.filaUpdatesSubject.next(filaUpdate);
         } catch (e) {

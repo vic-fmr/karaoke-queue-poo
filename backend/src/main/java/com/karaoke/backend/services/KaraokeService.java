@@ -40,25 +40,10 @@ public class KaraokeService {
 
     // KaraokeService.java
     @Transactional
-    public List<SessionResponseDTO> getAllSessions() {
-        return sessionRepository.findAll().stream()
-                // Mapeia cada entidade KaraokeSession para o DTO seguro
-                .map(this::mapToSessionResponseDTO)
-                .toList();
+    public List<KaraokeSession> getAllSessions() {
+        return sessionRepository.findAll();
     }
 
-    // Crie um método de mapeamento no Service ou em uma classe Mapper
-    private SessionResponseDTO mapToSessionResponseDTO(KaraokeSession session) {
-        // Lógica para criar o DTO, garantindo que os dados do User sejam seguros.
-        // Exemplo:
-        return new SessionResponseDTO(
-                session.getId(),
-                session.getAccessCode(),
-                session.getStatus().name(),
-                session.getConnectedUsers().size(),
-                session.getSongQueue().stream().map(this::mapToQueueItemDTO).toList()
-        );
-    }
 // Certifique-se de que o QueueItemDTO também não expõe dados sensíveis do User.
 
     @Transactional(readOnly = true)

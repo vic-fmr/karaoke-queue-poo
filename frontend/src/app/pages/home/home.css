@@ -1,59 +1,148 @@
+/* Container principal da Home */
 .home-container {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   justify-content: center;
   align-items: center;
-  gap: 50px;
-  background: #1A0F25;
-  background: linear-gradient(0deg, rgba(26, 15, 37, 1) 0%, rgba(92, 48, 117, 1) 93%);
+  gap: 30px;
   text-align: center;
+  padding: 2rem;
 }
 
+/* Estilo dos dois "Cards" */
+.enter-session-container,
 .create-session-container {
-  background-color: #2a1c3d;
+  background-color: var(--bg-card);
   padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   text-align: center;
+  width: 100%;
+  max-width: 600px; /* Limita a largura */
+  height: 70vh; /* Altura fixa para alinhamento */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
 }
 
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+p {
+  color: var(--text-muted);
+  margin-bottom: 25px;
+}
+
+img {
+  width: auto;
+  height: 150px;
+}
+
+/* Estilizando o "OU" que separa os cards */
+.home-container > p {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: -10px 0; /* Ajusta o espaçamento */
+}
+
+/* Container do input/botão */
+.input-container { /* Note: Corrigi o typo de "contaier" */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Estilo padrão de Input */
+input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-dark);
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  font-size: 1rem;
+  font-family: 'Poppins', sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]::placeholder {
+  color: var(--text-muted);
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
+}
+
+/* Estilo padrão de Botão (Ação Primária) */
 button {
-  background-color: #a855f7;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  font-size: 1em;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-family: 'Montserrat', sans-serif;
-  margin-top: 30px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-family: 'Poppins', sans-serif;
+  width: 100%;
 }
 
 button:hover {
-  background-color: white;
-  color: black;
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
 }
 
-input {
-  width: 500px;
+/* Botão de "Criar sessão" (Ação Secundária) */
+.create-session-container button {
+  background-color: transparent;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.create-session-container button:hover {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+}
+
+/* Mensagem de Erro */
+.error {
+  color: var(--error-color);
+  background: rgba(224, 0, 32, 0.1);
   padding: 10px;
-  border-radius: 15px;
-  border: 1px inset black;
-  background-color: #3a2c4d;
-  color: white;
-  font-size: 1em;
-  margin-top: 20px;
-  font-family: 'Montserrat', sans-serif;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  width: 100%;
+  text-align: left;
+  border-left: 3px solid var(--error-color);
+  margin-bottom: 10px; /* Adiciona espaço */
 }
 
-.input-contaier {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
+/* Responsividade */
+@media (max-width: 640px) {
+  .home-container {
+    gap: 20px;
+    padding: 1rem;
+  }
 
+  .enter-session-container,
+  .create-session-container {
+    padding: 25px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+}

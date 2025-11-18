@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Router} from '@angular/router';
+import {Observable, BehaviorSubject, tap} from 'rxjs';
 
 export interface UserInfo {
-  id: string;
+  id: number;
   name: string;
   email: string;
 }
@@ -15,10 +15,12 @@ export interface UserInfo {
 export class AuthService {
   private base = 'http://localhost:8080/auth';
   private currentUserSubject = new BehaviorSubject<UserInfo | null>(this.getUserFromToken());
-  constructor(private http: HttpClient, private router: Router) {}
+
+  constructor(private http: HttpClient, private router: Router) {
+  }
 
   login(email: string, password: string): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${this.base}/login`, { email, password }).pipe(
+    return this.http.post<{ token: string }>(`${this.base}/login`, {email, password}).pipe(
       tap((res) => {
         if (res?.token) localStorage.setItem('jwt', res.token);
       })
@@ -26,7 +28,7 @@ export class AuthService {
   }
 
   register(username: string, email: string, password: string) {
-    return this.http.post(`${this.base}/register`, { username, email, password });
+    return this.http.post(`${this.base}/register`, {username, email, password});
   }
 
   logout() {

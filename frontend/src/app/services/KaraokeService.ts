@@ -1,25 +1,40 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Observable} from 'rxjs';
 
-// --- Interfaces ---
-export interface AddSongRequest {
-  songTitle: string;
-  userId: string;
-  userName: string;
+// Modelos conforme backend (entidades)
+export interface User {
+  id: number;
+  username: string;
+  email?: string;
 }
 
 export interface Song {
-  id: string;
-  titulo: string;
-  urlYoutube: string;
-  adicionadoPor: string;
+  songId: number;
+  youtubeVideoId: string;
+  title: string;
+  artist: string;
+  url: string;
+}
+
+export interface QueueItemEntity {
+  queueItemId: number;
+  song: Song;
+  user: User;
+  timestampAdded: string;
 }
 
 export interface KaraokeSession {
+  id: number;
   accessCode: string;
-  queue: Song[];
-  currentSong: Song | null;
+  status: 'WAITING' | 'PLAYING' | 'CLOSED' | string;
+  connectedUsers: User[];
+  songQueue: QueueItemEntity[];
+}
+
+// DTO usado para adicionar música
+export interface AddSongRequest {
+  songTitle: string;
 }
 
 export interface YouTubeVideo {
@@ -28,13 +43,14 @@ export interface YouTubeVideo {
   thumbnailUrl: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class KaraokeService {
   private baseUrl = 'http://localhost:8080';
   private sessionsApiUrl = `${this.baseUrl}/api/sessions`;
   private videosApiUrl = `${this.baseUrl}/api/videos`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
 
   // --- Métodos de Sessão (REST) ---
 
@@ -46,9 +62,8 @@ export class KaraokeService {
     return this.http.post<void>(`${this.sessionsApiUrl}/${sessionCode}/queue`, request);
   }
 
-  removeSong(sessionCode: string, songId: string): Observable<void> {
-    // O endpoint correto do seu backend é /queue/{queueItemId}
-    return this.http.delete<void>(`${this.sessionsApiUrl}/${sessionCode}/queue/${songId}`);
+  removeSong(sessionCode: string, queueItemId: number): Observable<void> {
+    return this.http.delete<void>(`${this.sessionsApiUrl}/${sessionCode}/queue/${queueItemId}`);
   }
 
   createSession(): Observable<KaraokeSession> {
@@ -59,6 +74,6 @@ export class KaraokeService {
 
   searchVideos(query: string): Observable<YouTubeVideo[]> {
     const params = new HttpParams().set('query', query);
-    return this.http.get<YouTubeVideo[]>(`${this.videosApiUrl}/search`, { params });
+    return this.http.get<YouTubeVideo[]>(`${this.videosApiUrl}/search`, {params});
   }
 }

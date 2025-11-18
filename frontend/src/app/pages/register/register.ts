@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { UserService } from '../../services/UserService';
-import { AuthService } from '../../services/AuthService';
+import {Component} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {ReactiveFormsModule, FormGroup, FormControl, Validators} from '@angular/forms';
+import {Router, RouterLink} from '@angular/router';
+import {UserService} from '../../services/UserService';
+import {AuthService} from '../../services/AuthService';
 
 @Component({
   selector: 'app-register',
@@ -14,12 +14,15 @@ import { AuthService } from '../../services/AuthService';
 })
 export class Register { // <--- Nome da classe é 'Register'
 
+  signUpError: string | null = null;
+
   // Injeta o Router e o UserService
   constructor(
     private router: Router,
     private userService: UserService,
     private authService: AuthService
-  ) {}
+  ) {
+  }
 
   registerForm = new FormGroup({
     name: new FormControl('', Validators.required), // <--- Campo Nome
@@ -45,7 +48,8 @@ export class Register { // <--- Nome da classe é 'Register'
         },
         error: err => {
           console.error('Erro register', err);
-          // mostrar mensagem ao usuário
+
+          this.signUpError = err.error?.message || "Erro ao registrar usuário.";
         }
       });
     }

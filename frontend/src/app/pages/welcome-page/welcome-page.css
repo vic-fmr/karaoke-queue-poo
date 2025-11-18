@@ -1,37 +1,26 @@
-
+/* Container principal da tela de Boas-Vindas */
 .welcome-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh; /* Ocupa a altura total da viewport */
-  color: #f0f0f0; /* Texto claro */
-  padding: 20px;
+  min-height: 100vh;
+  padding: 2rem;
   text-align: center;
 }
 
-/* Área do cabeçalho com o placeholder da imagem */
+/* Área do logo */
 .header-box {
   width: 100%;
-  max-width: 400px;
-  margin-bottom: 50px; /* Espaço entre o box e o texto "Bem vindo" */
+  max-width: 350px; /* Um bom tamanho para o logo */
+  margin-bottom: 2.5rem;
 }
 
-img {
-  width: auto;
-  height: 100%;
-  border-radius: 8px;
-}
-
-.image-placeholder {
-  height: 200px; /* Altura do placeholder da imagem */
-  background-color: #333333; /* Cor de fundo cinza clara para o box */
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.logo {
+  width: 100%;
+  height: auto;
+  /* Adiciona um "brilho" sutil do nosso roxo primário */
+  filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.2));
 }
 
 /* Área de conteúdo (título e botões) */
@@ -40,51 +29,82 @@ img {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 300px; /* Largura máxima para centralizar botões */
+  max-width: 400px; /* Alinhado com os formulários de auth */
 }
 
 .content-area h1 {
-  font-size: 2.5em;
-  margin-bottom: 40px;
-  font-weight: 500;
+  font-size: 2.5rem; /* 2.5em = 2.5rem no root */
+  margin-bottom: 2.5rem; /* 40px */
+  font-weight: 700;
+  color: var(--text-light);
 }
 
-/* Estilo do botão primário (Cadastrar) */
+/* Título "KaraQ!" com gradiente da nossa paleta */
+.gradient-text {
+  background: linear-gradient(to right, var(--primary-light), var(--primary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 700; /* 'bold' */
+  font-size: 2.8rem; /* Um pouco maior para destacar a marca */
+}
+
+/* Botão primário (Cadastrar) - AGORA USANDO NOSSO PADRÃO */
 .btn-primary {
   width: 100%;
-  padding: 15px;
-  background-color: #1e1e1e; /* Cor escura próxima ao preto */
+  padding: 12px 24px;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 50px; /* Bordas arredondadas */
-  font-size: 1.1em;
-  font-weight: bold;
+  border-radius: 6px; /* Nosso padrão */
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-family: 'Poppins', sans-serif;
   text-align: center;
-  text-decoration: none; /* Remove sublinhado se for usado com routerLink */
+  text-decoration: none;
   display: inline-block;
-  margin-bottom: 20px; /* Espaço entre o botão e o link */
+  margin-bottom: 1.5rem; /* 20px */
 }
 
 .btn-primary:hover {
-  background-color: #333333;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
 }
 
 /* Texto do link de Login */
 .login-link-text {
-  font-size: 1em;
-  color: #aaaaaa;
+  font-size: 1rem;
+  color: var(--text-muted); /* Nosso padrão */
 }
 
+/* Link de Login */
 .login-link {
-  color: #f0f0f0; /* Cor do link */
+  color: var(--primary-light); /* Nosso padrão de link */
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 600; /* 'bold' */
   cursor: pointer;
 }
 
 .login-link:hover {
   text-decoration: underline;
+}
+
+.logo {
+  filter: drop-shadow(0 4px 15px rgba(168, 85, 247, 0.4));
+
+  animation: flutuar 3s ease-in-out infinite alternate,
+  pulsarBrilho 2s ease-in-out infinite alternate;
+}
+
+
+@media (max-width: 480px) {
+  .content-area h1 {
+    font-size: 2rem;
+  }
+
+  .gradient-text {
+    font-size: 2.3rem;
+  }
 }
