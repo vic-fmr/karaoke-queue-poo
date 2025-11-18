@@ -161,7 +161,7 @@ class KaraokeServiceTest {
         String songTitle = "Test Song";
         User mockUser = new User();
         mockUser.setId(10L);
-        YouTubeVideoDTO mockVideo = new YouTubeVideoDTO("videoId", "Title", true);
+        YouTubeVideoDTO mockVideo = new YouTubeVideoDTO("videoId", "Title", "thumbUrl", true);
         Song mockSong = new Song();
         mockSong.setTitle(songTitle);
 
