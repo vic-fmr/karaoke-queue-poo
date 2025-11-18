@@ -123,6 +123,26 @@ public class KaraokeService {
         // 5. Adiciona à Fila
         QueueItem queueItem = new QueueItem(UUID.randomUUID().toString(), user, song);
         session.addQueueItem(queueItem);
+
+        // Atualiza ordem de rotação: se o usuário ainda não estiver presente, insere-o
+        // imediatamente após o usuário apontado por nextUserIndex, para que o novato
+        // entre na rotação logo após a posição atual.
+        String uid = user.getId() != null ? user.getId().toString() : "";
+        List<String> rotation = session.getRotationUserIds();
+        if (rotation == null) rotation = new java.util.ArrayList<>();
+
+        if (rotation.isEmpty()) {
+            rotation.add(uid);
+            session.setNextUserIndex(0);
+        } else if (!rotation.contains(uid)) {
+            int insertPos = session.getNextUserIndex() + 1;
+            if (insertPos < 0) insertPos = 0;
+            if (insertPos > rotation.size()) insertPos = rotation.size();
+            rotation.add(insertPos, uid);
+        }
+
+        session.setRotationUserIds(rotation);
+
         sessionRepository.save(session);
 
         System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
@@ -139,6 +159,25 @@ public class KaraokeService {
 
         if (itemOpt.isPresent()) {
             QueueItem itemToDelete = itemOpt.get();
+            // Se o item a ser deletado for o que está atualmente como nowPlaying na fila
+            // justa, avançamos o ponteiro de rotação para o próximo usuário.
+            List<com.karaoke.backend.models.QueueItem> fairOrder = filaService.computeFairOrder(session);
+            String nowPlayingId = fairOrder.isEmpty() ? null : fairOrder.get(0).getQueueItemId();
+            if (nowPlayingId != null && nowPlayingId.equals(queueItemId)) {
+                // Avança nextUserIndex para o usuário seguinte na rotação
+                String userIdStr = itemToDelete.getUser() != null && itemToDelete.getUser().getId() != null
+                        ? itemToDelete.getUser().getId().toString()
+                        : "";
+                List<String> rotation = session.getRotationUserIds();
+                if (rotation != null && !rotation.isEmpty()) {
+                    int idx = rotation.indexOf(userIdStr);
+                    if (idx != -1) {
+                        int nextIdx = (idx + 1) % rotation.size();
+                        session.setNextUserIndex(nextIdx);
+                    }
+                }
+                sessionRepository.save(session);
+            }
             // A sessão não precisa ser buscada explicitamente se a QueueItem não for
             // bidirecionalmente mapeada com a sessão.
             // Deletamos o QueueItem diretamente.

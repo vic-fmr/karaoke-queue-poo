@@ -32,6 +32,14 @@ public class KaraokeSession {
     @OrderBy("timestampAdded ASC")
     private List<QueueItem> songQueue = new ArrayList<>();
 
+    // Lista que guarda a ordem de rotação dos usuários para a fila justa.
+    // Persistida como uma coleção de elementos simples.
+    @ElementCollection
+    private List<String> rotationUserIds = new ArrayList<>();
+
+    // Índice dentro de rotationUserIds apontando qual usuário será servido a seguir.
+    private int nextUserIndex = 0;
+
 
     public KaraokeSession() {
         this.accessCode = generateAccessCode();
