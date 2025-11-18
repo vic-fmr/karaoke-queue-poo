@@ -1,6 +1,7 @@
 package com.karaoke.backend.services;
 
 import com.karaoke.backend.dtos.RegisterRequestDTO;
+import com.karaoke.backend.exception.UserAlreadyExistsException;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class AuthService implements UserDetailsService {
 
     public User register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Usuário já existe"); // Trate melhor essa exceção
+            throw new UserAlreadyExistsException("O e-mail '" + dto.email() + "' já está em uso.");
         }
 
         String encodedPassword = passwordEncoder.encode(dto.password());

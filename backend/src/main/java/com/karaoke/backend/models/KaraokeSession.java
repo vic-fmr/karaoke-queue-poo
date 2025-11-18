@@ -2,7 +2,7 @@ package com.karaoke.backend.models;
 
 import jakarta.persistence.*;
 import lombok.Data;
-// import lombok.NoArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Data
-// @NoArgsConstructor
+@NoArgsConstructor
 public class KaraokeSession {
 
     @Id
@@ -18,25 +18,18 @@ public class KaraokeSession {
     private Long id;
 
     @Column(unique = true, nullable = false, length = 6)
-    private String accessCode;
+    private String accessCode = generateAccessCode();
 
     @Enumerated(EnumType.STRING)
-    private SessionStatus status;
+    private SessionStatus status = SessionStatus.WAITING;
 
-
-    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "session")
     private List<User> connectedUsers = new ArrayList<>();
-
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("timestampAdded ASC")
     private List<QueueItem> songQueue = new ArrayList<>();
 
-
-    public KaraokeSession() {
-        this.accessCode = generateAccessCode();
-        this.status = SessionStatus.WAITING;
-    }
 
     // O metodo generateAccessCode() continua o mesmo...
     private String generateAccessCode() {
