@@ -3,6 +3,7 @@
   width: 100%;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   font-size: 1.15rem;
   justify-content: center;
   align-items: center;
@@ -28,11 +29,33 @@
   align-items: center;
 }
 
+.choice-conteiner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, var(--primary-light), var(--primary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 700; /* 'bold' */
+}
+
 h1 {
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-light);
   margin-bottom: 10px;
+}
+
+h3 {
+  border-bottom: 1px solid var(--text-muted);
+  width: 90vw;
+  padding-bottom: 12px;
 }
 
 p {
@@ -46,7 +69,7 @@ img {
 }
 
 /* Estilizando o "OU" que separa os cards */
-.home-container > p {
+.choice-conteiner > p {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
@@ -178,6 +201,11 @@ button:hover {
   .enter-session-container,
   .create-session-container {
     padding: 25px;
+  }
+
+  .choice-conteiner {
+    flex-direction: column;
+    gap: 15px;
   }
 
   h1 {

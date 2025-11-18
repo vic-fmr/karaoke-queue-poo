@@ -2,7 +2,6 @@ import {Component} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ReactiveFormsModule, FormGroup, FormControl, Validators} from '@angular/forms';
 import {Router, RouterLink} from '@angular/router';
-import {UserService} from '../../services/UserService';
 import {AuthService} from '../../services/AuthService';
 
 @Component({
@@ -19,7 +18,6 @@ export class Register { // <--- Nome da classe é 'Register'
   // Injeta o Router e o UserService
   constructor(
     private router: Router,
-    private userService: UserService,
     private authService: AuthService
   ) {
   }

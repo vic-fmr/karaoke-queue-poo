@@ -57,8 +57,8 @@ export class AuthService {
 
       return {
         id: payload.userId || payload.id,
-        name: payload.sub || payload.username || 'Usuário Desconhecido',
-        email: payload.email || '',
+        name: payload.name || 'Usuário Desconhecido',
+        email: payload.sub || '',
       };
     } catch (e) {
       console.error('Erro ao decodificar token', e);

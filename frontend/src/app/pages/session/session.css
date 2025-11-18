@@ -312,7 +312,7 @@ input:focus {
 /* --- Responsividade (Telas Menores) --- */
 @media (max-width: 900px) {
   .content-container {
-    flex-direction: column; /* Pilha as colunas em telas menores */
+    flex-direction: column-reverse; /* Pilha as colunas em telas menores */
     padding: 0 10px;
     gap: 20px;
   }

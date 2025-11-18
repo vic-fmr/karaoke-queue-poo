@@ -1,8 +1,6 @@
 package com.karaoke.backend.services;
 
 
-
-
 import com.karaoke.backend.models.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -12,6 +10,7 @@ import io.jsonwebtoken.io.Decoders;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.security.Key;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +37,9 @@ public class TokenService {
         Date expirationDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
-                .setSubject(user.getEmail()) // O que o token representa (o email)
+                .setSubject(user.getEmail())
+                .claim("id", user.getId())
+                .claim("name", user.getUsername())
                 .setIssuedAt(now) // Data de emissão
                 .setExpiration(expirationDate) // Data de expiração
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256) // Assina com a chave e algoritmo

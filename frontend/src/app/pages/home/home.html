@@ -1,43 +1,43 @@
 <div class="home-container" animate.enter="enter-animation" animate.leave="leave-animation">
+  <h1>Olá, <span class="gradient-text"> {{ user }}</span>!</h1>
+  <h3>Como vamos cantar hoje? </h3>
 
-  <div class="enter-session-container">
+  <div class="choice-conteiner">
+    <div class="enter-session-container">
+      <img src="assets/join-session.png" alt="Icone de entrar na sessão.">
+      <div>
+        <h1>Entrar em uma sessão.</h1>
+        <p>Entre na sessão pelo ID:</p>
 
-    <img src="assets/join-session.png" alt="Icone de entrar na sessão.">
+        <div class="input-container">
+          <input type="text" [formControl]="sessionId" (keydown.enter)="enter()"
+                 placeholder="ID da Sessão (ex: KARAOKE123)"/>
 
-    <div>
-      <h1>Entrar em uma sessão.</h1>
-      <p>Entre na sessão pelo ID:</p>
+          @if (error) {
+            <div class="error">{{ error }}</div>
+          }
 
-      <div class="input-container">
-        <input type="text" [formControl]="sessionId" (keydown.enter)="enter()"
-               placeholder="ID da Sessão (ex: KARAOKE123)"/>
+          <!--        @if (loading) {-->
+          <!--          <div class="loader"></div>-->
+          <!--        }-->
 
-        @if (error) {
-          <div class="error">{{ error }}</div>
-        }
-
-        <!--        @if (loading) {-->
-        <!--          <div class="loader"></div>-->
-        <!--        }-->
-
-        <button (click)="enter()">Entrar</button>
+          <button (click)="enter()">Entrar</button>
+        </div>
       </div>
     </div>
 
+    <p>OU</p>
 
-  </div>
 
-  <p>OU</p>
-
-  <div class="create-session-container">
-    <img src="assets/create-session.png" alt="Icone de criar sessão">
-    <div>
-      <h1>Criar uma sessão!</h1>
-      <p>Crie sua sessão e convide amigos através do código</p>
-      <button [routerLink]="['/my-session']"> Criar sessão!</button>
+    <div class="create-session-container">
+      <img src="assets/create-session.png" alt="Icone de criar sessão">
+      <div>
+        <h1>Criar uma sessão!</h1>
+        <p>Crie sua sessão e convide amigos através do código</p>
+        <button [routerLink]="['/my-session']"> Criar sessão!</button>
+      </div>
     </div>
+
   </div>
-
-
 </div>
 

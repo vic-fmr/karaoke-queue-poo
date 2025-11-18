@@ -3,6 +3,7 @@ import {CommonModule} from '@angular/common';
 import {ReactiveFormsModule, FormControl, Validators} from '@angular/forms';
 import {Router, RouterLink} from '@angular/router';
 import {KaraokeService} from '../../services/KaraokeService';
+import {AuthService} from '../../services/AuthService';
 
 @Component({
   selector: 'app-home',
@@ -15,8 +16,20 @@ export class Home {
   sessionId = new FormControl('', [Validators.required]);
   error: string | null = null;
   loading: boolean = false;
+  user: string = ''
 
-  constructor(private router: Router, private ks: KaraokeService) {
+  constructor(private router: Router, private ks: KaraokeService, private authService: AuthService) {
+
+
+    const currentUser = this.authService.getCurrentUser();
+
+    console.log(currentUser);
+
+    if (currentUser) {
+      this.user = currentUser.name;
+    } else {
+      this.user = 'Convidado';
+    }
   }
 
   enter() {
@@ -48,4 +61,6 @@ export class Home {
 
 
   }
+
+  protected readonly name = name;
 }
