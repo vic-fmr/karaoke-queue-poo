@@ -9,13 +9,18 @@
       <p>Entre na sessão pelo ID:</p>
 
       <div class="input-container">
-        <input type="text" [formControl]="sessionId" placeholder="ID da Sessão (ex: KARAOKE123)"/>
+        <input type="text" [formControl]="sessionId" (keydown.enter)="enter()"
+               placeholder="ID da Sessão (ex: KARAOKE123)"/>
 
         @if (error) {
           <div class="error">{{ error }}</div>
         }
 
-        <button (click)="enter()" (keydown.enter)="enter()">Entrar</button>
+        <!--        @if (loading) {-->
+        <!--          <div class="loader"></div>-->
+        <!--        }-->
+
+        <button (click)="enter()">Entrar</button>
       </div>
     </div>
 

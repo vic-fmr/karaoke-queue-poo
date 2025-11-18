@@ -218,8 +218,16 @@ img {
 
 .add-row {
   display: flex;
+  flex-direction: column;
   padding-top: 10px;
-  gap: 8px;
+  gap: 16px;
+}
+
+.add-input-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 10px;
 }
 
 input {
@@ -236,6 +244,38 @@ input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
+}
+
+.loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.loader {
+  height: 40px;
+  aspect-ratio: 1;
+  padding: 5px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  position: relative;
+  mask: conic-gradient(#000 0 0) content-box exclude, conic-gradient(#000 0 0);
+  filter: blur(4px);
+}
+
+.loader:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(#0000 0 5%, #C02942, #0000 20% 50%);
+  animation: l2 1.5s linear infinite;
+}
+
+@keyframes l2 {
+  to {
+    rotate: 1turn
+  }
 }
 
 .add-row input {

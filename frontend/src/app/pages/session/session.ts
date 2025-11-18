@@ -32,6 +32,7 @@ export class Session implements OnInit, OnDestroy {
   userName: string = '';
   userId: number = 0;
   connectedUsers = signal<ConnectedUser[]>([]);
+  isAddingSong: boolean = false;
 
   queue = signal<QueueViewItem[]>([]);
   current = signal<QueueViewItem | null>(null);
@@ -118,6 +119,8 @@ export class Session implements OnInit, OnDestroy {
 
   addSong() {
     this.addError = null;
+    this.isAddingSong = true;
+
     const songTitle = (this.urlToAdd || '').trim();
     if (!songTitle || !this.sessionCode) {
       this.addError = 'Título da música ou código da sessão inválido.';
@@ -129,10 +132,12 @@ export class Session implements OnInit, OnDestroy {
     const addSub = this.karaokeService.addSong(this.sessionCode, request).subscribe({
       next: () => {
         this.urlToAdd = '';
+        this.isAddingSong = false;
         console.log('[Session] Música adicionada com sucesso');
       },
       error: (err) => {
         this.addError = err?.error || 'Erro ao adicionar música.';
+        this.isAddingSong = false;
         console.error('[Session] Erro ao adicionar música:', err);
       },
     });

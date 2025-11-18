@@ -70,8 +70,16 @@
         <h4>Adicionar à fila</h4>
 
         <div class="add-row">
-          <input type="text" [(ngModel)]="urlToAdd" placeholder="Nome da música"/>
-          <button (click)="addSong()">+</button>
+          @if (isAddingSong) {
+            <div class="loading-overlay">
+              <p>Pesquisando música... </p>
+              <div class="loader"></div>
+            </div>
+          }
+          <div class="add-input-container">
+            <input type="text" [(ngModel)]="urlToAdd" (keydown.enter)="addSong()" placeholder="Nome da música"/>
+            <button (click)="addSong()">+</button>
+          </div>
         </div>
 
         @if (addError) {
