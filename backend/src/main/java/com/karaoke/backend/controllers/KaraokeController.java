@@ -3,31 +3,31 @@ package com.karaoke.backend.controllers;
 import java.net.URI;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.karaoke.backend.models.User;
 import com.karaoke.backend.dtos.AddSongRequestDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.services.KaraokeService;
-import com.karaoke.backend.services.exception.SessionNotFoundException;
-import com.karaoke.backend.services.exception.VideoNotFoundException;
+
 
 @RestController
 @RequestMapping("/api/sessions")
+@RequiredArgsConstructor
 public class KaraokeController {
 
-    @Autowired
-    private KaraokeService service;
+    private final KaraokeService service;
+
 
     @PostMapping
     public ResponseEntity<KaraokeSession> createSession() {
@@ -45,46 +45,33 @@ public class KaraokeController {
 
     @GetMapping("/{sessionCode}")
     public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode){
-        KaraokeSession session = service.getSession(sessionCode.toUpperCase());
+        KaraokeSession session = service.getSession(sessionCode);
         return ResponseEntity.ok(session);
     }
 
-@PostMapping("/{sessionCode}/queue")
+    @PostMapping("/{sessionCode}/queue")
     public ResponseEntity<Void> addSongToQueue(
         @PathVariable String sessionCode, 
-        @RequestBody AddSongRequestDTO request // DTO que agora contém o TÍTULO
+        @RequestBody AddSongRequestDTO request,
+        @AuthenticationPrincipal User authenticatedUser
     ) {
-        // O Service agora recebe o título da música
         service.addSongToQueue(
-            sessionCode.toUpperCase(), 
-            request.getSongTitle(),
-            request.getUserId(), 
-            request.getUserName()
+            sessionCode,
+            request.songTitle(),
+            authenticatedUser
         );
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/{sessionCode}")
     public ResponseEntity<Void> endSession(@PathVariable String sessionCode){
-        service.endSession(sessionCode.toUpperCase());
+        service.endSession(sessionCode);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{sessionCode}/queue/{queueItemId}")
-    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable String queueItemId){
-        service.deleteSongFromQueue(sessionCode.toUpperCase(), queueItemId);
+    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable Long queueItemId){
+        service.deleteSongFromQueue(sessionCode, queueItemId);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(SessionNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleSessionNotFound(SessionNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(VideoNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND) // Ou HttpStatus.UNPROCESSABLE_ENTITY (422)
-    public ResponseEntity<String> handleVideoNotFound(VideoNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

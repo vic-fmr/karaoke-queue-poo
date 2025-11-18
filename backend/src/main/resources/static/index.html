@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q-Up Karaoke - Teste de Fila em Tempo Real</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .log-container { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; margin-top: 10px; }
+        .update-message { margin-bottom: 8px; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+        .highlight { color: darkgreen; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Q-Up: Simulador de Participante</h1>
+    
+    <div>
+        <label for="sessionIdInput">Código da Sessão:</label>
+        <input type="text" id="sessionIdInput" value="G3T7R1" placeholder="Ex: A1B2C3">
+        <button onclick="connectAndSubscribe()">Conectar & Inscrever-se</button>
+        <button onclick="disconnect()">Desconectar</button>
+        <p id="status">Status: Desconectado</p>
+    </div>
+
+    <h2>Fila Recebida (JSON):</h2>
+    <div id="queueLog" class="log-container">
+        </div>
+
+    <script type="text/javascript">
+        let stompClient = null;
+        let sessionId = "";
+
+        function setConnected(connected) {
+            document.getElementById('status').textContent = "Status: " + (connected ? "Conectado" : "Desconectado");
+            document.getElementById('queueLog').innerHTML = ''; // Limpa o log ao (des)conectar
+        }
+
+        function connectAndSubscribe() {
+            // 1. Obter o Código da Sessão
+            sessionId = document.getElementById('sessionIdInput').value.toUpperCase();
+            if (!sessionId) {
+                alert("Por favor, insira um Código da Sessão.");
+                return;
+            }
+            
+            // 2. Conectar-se ao Endpoint do Spring Boot WebSocket
+            // O SockJS cuida do handshake e do fallback
+            let socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function (frame) {
+                setConnected(true);
+                console.log('Conectado: ' + frame);
+
+                // 3. Inscrever-se no Tópico da Fila Específico
+                const topic = '/topic/fila/' + sessionId;
+                console.log('Tentando inscrever-se em:', topic);
+
+                stompClient.subscribe(topic, function (message) {
+                    showQueueUpdate(message.body);
+                });
+            }, function(error) {
+                console.error('Erro de conexão:', error);
+                setConnected(false);
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            setConnected(false);
+            console.log("Desconectado.");
+        }
+
+        function showQueueUpdate(messageBody) {
+            const logElement = document.getElementById('queueLog');
+            
+            // Analisa a mensagem JSON recebida (FilaUpdateDTO)
+            const filaUpdate = JSON.parse(messageBody);
+            
+            // Exibe a mensagem no log
+            const updateDiv = document.createElement('div');
+            updateDiv.className = 'update-message';
+            updateDiv.innerHTML = `<span class="highlight">Fila Atualizada (${new Date().toLocaleTimeString()}):</span><br>` + 
+                                  `<pre>${JSON.stringify(filaUpdate, null, 2)}</pre>`;
+            
+            // Adiciona a nova atualização ao topo do log
+            logElement.prepend(updateDiv);
+        }
+
+        // Tenta conectar automaticamente com o código de exemplo ao carregar a página
+        // window.onload = connectAndSubscribe; 
+
+    </script>
+</body>
+</html>
