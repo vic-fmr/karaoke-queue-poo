@@ -1,9 +1,7 @@
 package com.karaoke.backend.services;
 
-import com.karaoke.backend.dtos.AddSongRequestDTO; // NOVO IMPORT
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.exception.SessionNotFoundException;
-import com.karaoke.backend.exception.VideoNotFoundException;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;
@@ -17,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 

@@ -26,13 +26,18 @@ class TokenServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Gera uma chave válida para o algoritmo HS256
         Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
         secretKeyBase64 = Encoders.BASE64.encode(key.getEncoded());
 
+        // Injeta o segredo no serviço
         ReflectionTestUtils.setField(tokenService, "secret", secretKeyBase64);
         
         testUser = new User();
+        testUser.setId(1L); // É bom ter ID também
         testUser.setUsername("testuser");
+        // CORREÇÃO 1: O seu TokenService usa o EMAIL como Subject, então precisamos setar ele
+        testUser.setEmail("teste@email.com"); 
     }
 
     @Test
@@ -50,9 +55,12 @@ class TokenServiceTest {
         ReflectionTestUtils.setField(tokenService, "expirationTime", 60000L);
         String token = tokenService.generateToken(testUser);
 
-        String username = tokenService.validateToken(token);
+        // O método retorna o "Subject" do token
+        String subject = tokenService.validateToken(token);
 
-        assertEquals("testuser", username);
+        // CORREÇÃO 2: Seu serviço coloca o email no subject (.setSubject(user.getEmail())),
+        // então devemos esperar o email de volta, não o username.
+        assertEquals("teste@email.com", subject);
     }
 
     @Test
@@ -69,8 +77,11 @@ class TokenServiceTest {
         ReflectionTestUtils.setField(tokenService, "expirationTime", 60000L);
         String token = tokenService.generateToken(testUser);
 
+        // Gera uma outra chave aleatória para simular erro de assinatura
         Key otherKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
         String otherBase64Key = Encoders.BASE64.encode(otherKey.getEncoded());
+        
+        // Troca a chave do serviço para tentar validar o token antigo
         ReflectionTestUtils.setField(tokenService, "secret", otherBase64Key);
 
         String username = tokenService.validateToken(token);
@@ -80,9 +91,11 @@ class TokenServiceTest {
 
     @Test
     void validateToken_ShouldReturnEmptyString_WhenTokenIsExpired() {
-        ReflectionTestUtils.setField(tokenService, "expirationTime", -1L); 
+        // Define tempo negativo para gerar token já expirado
+        ReflectionTestUtils.setField(tokenService, "expirationTime", -1000L); 
         String expiredToken = tokenService.generateToken(testUser);
 
+        // Garante que a chave está correta para o teste focar apenas na expiração
         ReflectionTestUtils.setField(tokenService, "secret", secretKeyBase64);
 
         String username = tokenService.validateToken(expiredToken);

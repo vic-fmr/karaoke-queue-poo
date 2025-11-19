@@ -92,8 +92,8 @@ public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, Use
 
     @Transactional
     public void deleteSongFromQueue(String accessCode, Long queueItemId) {
-        Optional<QueueItem> itemOpt = queueItemRepository.findById(queueItemId);
         KaraokeSession session = getSession(accessCode);
+        Optional<QueueItem> itemOpt = queueItemRepository.findById(queueItemId);    
 
         if (itemOpt.isPresent()) {
             QueueItem itemToDelete = itemOpt.get();

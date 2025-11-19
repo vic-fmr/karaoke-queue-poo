@@ -1,7 +1,6 @@
 package com.karaoke.backend.services;
 
 import com.karaoke.backend.dtos.FilaUpdateDTO;
-import com.karaoke.backend.dtos.QueueItemDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;

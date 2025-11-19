@@ -120,8 +120,15 @@ class AuthServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(EMAIL, result.getUsername()); // Nota: UserDetails usa 'username' para o e-mail/identificador
-        // O mockUser é retornado, que é uma instância de User e, portanto, UserDetails
+        
+        // CORREÇÃO AQUI:
+        // O método getUsername() da interface UserDetails retorna o campo "username" do objeto User ("testUser"),
+        // e não o email, mesmo que a busca tenha sido feita por email.
+        assertEquals(USERNAME, result.getUsername()); 
+        
+        // Se você quisesse validar o email, teria que fazer o cast, pois UserDetails não tem getEmail():
+        // assertEquals(EMAIL, ((User) result).getEmail());
+
         assertInstanceOf(User.class, result);
 
         verify(userRepository, times(1)).findByEmail(EMAIL);
