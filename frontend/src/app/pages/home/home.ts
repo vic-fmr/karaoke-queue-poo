@@ -16,13 +16,14 @@ export class Home {
   sessionId = new FormControl('', [Validators.required]);
   error: string | null = null;
   loading: boolean = false;
-  user: string = ''
+  user: string = '';
 
-  constructor(private router: Router, private ks: KaraokeService, private authService: AuthService) {
-
-
+  constructor(
+    private router: Router, 
+    private ks: KaraokeService, 
+    private authService: AuthService
+  ) {
     const currentUser = this.authService.getCurrentUser();
-
     console.log(currentUser);
 
     if (currentUser) {
@@ -32,20 +33,22 @@ export class Home {
     }
   }
 
+  // Método para entrar em sessão existente
   enter() {
     this.error = null;
-    this.loading = true;
-
+    
     const id = (this.sessionId.value || '').toString().trim();
     if (!id) {
       this.error = 'Informe o ID da sessão.';
-      this.loading = false;
       return;
     }
+    
+    this.loading = true;
 
     this.ks.getSession(id).subscribe({
-      next: (valid) => {
-        if (valid) {
+      next: (session) => {
+        // Se o backend retornar a sessão, significa que ela existe/é válida
+        if (session) {
           this.router.navigate(['/session', id]);
         } else {
           this.error = 'Sessão não encontrada.';
@@ -54,13 +57,29 @@ export class Home {
       },
       error: (err) => {
         console.log("Erro ao buscar sessão:", err);
-        this.error = 'Sessão não encontrada.';
+        this.error = 'Sessão não encontrada ou erro de conexão.';
         this.loading = false;
       }
     });
-
-
   }
 
-  protected readonly name = name;
+  // Método implementado para CRIAR nova sessão
+  createSession() {
+    this.error = null;
+    this.loading = true;
+
+    this.ks.createSession().subscribe({
+      next: (newSession) => {
+        console.log('Sessão criada com sucesso:', newSession);
+        this.loading = false;
+        // Redireciona para a tela da sessão usando o código gerado pelo backend
+        this.router.navigate(['/host', newSession.accessCode]);
+      },
+      error: (err) => {
+        console.error('Erro ao criar sessão:', err);
+        this.error = 'Erro ao criar nova sessão. Tente novamente.';
+        this.loading = false;
+      }
+    });
+  }
 }

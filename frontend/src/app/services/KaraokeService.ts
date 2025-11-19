@@ -92,4 +92,8 @@ export class KaraokeService {
     // Ajustado para bater com SongController @GetMapping("/search")
     return this.http.get<YouTubeVideo[]>(`${this.songsApiUrl}/search`, { params });
   }
+
+  playNextSong(sessionCode: string): Observable<QueueItemEntity | null> {
+    return this.http.post<QueueItemEntity | null>(`${this.sessionsApiUrl}/${sessionCode}/queue/next`, {});
+  }
 }
