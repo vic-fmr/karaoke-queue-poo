@@ -1,5 +1,6 @@
 package com.karaoke.backend.services;
 
+import com.karaoke.backend.dtos.AddSongRequestDTO; // NOVO IMPORT
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.exception.SessionNotFoundException;
 import com.karaoke.backend.exception.VideoNotFoundException;
@@ -152,69 +153,87 @@ class KaraokeServiceTest {
     }
 
     // -----------------------------------------------------------------------------------
-    // Testes para addSongToQueue(String accessCode, String songTitle, User user)
+    // Testes para addSongToQueue(String accessCode, AddSongRequestDTO request, User user)
     // -----------------------------------------------------------------------------------
 
     @Test
     void addSongToQueue_DeveAdicionarMusicaAFilaComSucesso() {
         // Arrange
-        String songTitle = "Test Song";
+        String videoId = "V123";
+        String title = "Bohemian Rhapsody";
+        String thumbnailUrl = "http://thumb.url";
+        
+        // NOVO: Usamos o DTO completo
+        YouTubeVideoDTO requestDTO = new YouTubeVideoDTO(videoId, title, thumbnailUrl, true);
+        
         User mockUser = new User();
         mockUser.setId(10L);
-        YouTubeVideoDTO mockVideo = new YouTubeVideoDTO("videoId", "Title", true);
+        
+        // A lógica de busca do YouTube e criação da música agora é mais simples, pois
+        // o DTO já carrega os dados.
         Song mockSong = new Song();
-        mockSong.setTitle(songTitle);
+        mockSong.setTitle(title);
+        mockSong.setYoutubeVideoId(videoId);
 
         // 1. Mock do getSession()
         when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
-        // 2. Mock da busca no YouTube
-        when(youTubeService.searchVideos(anyString())).thenReturn(List.of(mockVideo));
-        // 3. Mock da criação da música
-        when(songService.createSongFromVideo(mockVideo)).thenReturn(mockSong);
-        // 4. Mock do salvamento da sessão (para verificar a chamada)
+        
+        
+        // 3. Mock do salvamento da sessão (para verificar a chamada)
         when(sessionRepository.save(any(KaraokeSession.class))).thenReturn(mockSession);
 
         // Act
-        karaokeService.addSongToQueue(ACCESS_CODE, songTitle, mockUser);
+        karaokeService.addSongToQueue(ACCESS_CODE, requestDTO, mockUser); // NOVO: Passando requestDTO
 
         // Assert
         // Verifica se a sessão foi buscada
         verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
-        // Verifica se a busca no YouTube foi chamada com o termo correto
-        verify(youTubeService, times(1)).searchVideos(songTitle + " karaoke");
-        // Verifica se o usuário foi adicionado à sessão (pois mockUser não tem sessão setada)
+                
+        // Verifica se o usuário foi adicionado à sessão 
         assertTrue(mockSession.getConnectedUsers().contains(mockUser));
+        
         // Verifica se o item foi adicionado à fila
         assertEquals(1, mockSession.getSongQueue().size());
-        // Verifica se a sessão foi salva (persiste a fila e o usuário)
+        
+        // Verifica se a sessão foi salva
         verify(sessionRepository, times(1)).save(mockSession);
+        
         // Verifica se a notificação foi enviada
         verify(filaService, times(1)).notificarAtualizacaoFila(ACCESS_CODE);
     }
 
     @Test
-    void addSongToQueue_DeveLancarVideoNotFoundException_QuandoNenhumVideoValidoEncontrado() {
+    void addSongToQueue_DeveLancarSessionNotFoundException_QuandoSessaoNaoEncontrada() {
         // Arrange
-        String songTitle = "Test Song";
+        // NOVO: Criação do DTO
+        YouTubeVideoDTO requestDTO = new YouTubeVideoDTO("V1", "Title", "url", true);
         User mockUser = new User();
 
         // 1. Mock do getSession()
-        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.of(mockSession));
-        // 2. Mock da busca no YouTube (retorna lista vazia)
-        when(youTubeService.searchVideos(anyString())).thenReturn(Collections.emptyList());
+        when(sessionRepository.findByAccessCode(ACCESS_CODE)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(VideoNotFoundException.class,
-                () -> karaokeService.addSongToQueue(ACCESS_CODE, songTitle, mockUser));
+        assertThrows(SessionNotFoundException.class,
+                () -> karaokeService.addSongToQueue(ACCESS_CODE, requestDTO, mockUser)); // NOVO: Passando requestDTO
 
         // Assertions de verificação
         verify(sessionRepository, times(1)).findByAccessCode(ACCESS_CODE);
-        verify(youTubeService, times(1)).searchVideos(songTitle + " karaoke");
+        
         // Verifica que NENHUMA outra operação aconteceu
-        verify(songService, never()).createSongFromVideo(any());
         verify(sessionRepository, never()).save(any());
         verify(filaService, never()).notificarAtualizacaoFila(anyString());
     }
+
+    // O teste para VideoNotFoundException não é mais necessário aqui, pois
+    // a verificação de vídeo válido foi movida para o front/serviço de busca,
+    // e o KaraokeService assume que o DTO contém dados válidos de um vídeo selecionado.
+    // O teste anterior era:
+    /*
+    @Test
+    void addSongToQueue_DeveLancarVideoNotFoundException_QuandoNenhumVideoValidoEncontrado() {
+        // ... (Removido, pois a lógica de busca/validação não está mais neste método)
+    }
+    */
 
     // -----------------------------------------------------------------------------------
     // Testes para deleteSongFromQueue(String accessCode, Long queueItemId)

@@ -20,6 +20,6 @@ public class SongController {
 
     @GetMapping("/search")
     public List<YouTubeVideoDTO> search(@RequestParam String query) {
-        return youTubeService.searchVideos(query);
+        return youTubeService.searchVideos(query+"+karaoke");
     }
 }

@@ -43,11 +43,12 @@ public class YoutubeService {
         for (Map<String, Object> item : searchResults) {
             String videoId = (String) ((Map<String, Object>) item.get("id")).get("videoId");
             String title = (String) ((Map<String, Object>) item.get("snippet")).get("title");
+            String thumbnaillUrl = (String) ((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) item.get("snippet")).get("thumbnails")).get("default")).get("url");
 
             boolean isValid = validationMap.getOrDefault(videoId, false);
 
             if (isValid) {
-                YouTubeVideoDTO dto = new YouTubeVideoDTO(videoId, title, true);
+                YouTubeVideoDTO dto = new YouTubeVideoDTO(videoId, title, thumbnaillUrl, true);
                 finalValidList.add(dto);
             }
         }

@@ -70,20 +70,47 @@
         <h4>Adicionar à fila</h4>
 
         <div class="add-row">
-          @if (isAddingSong) {
-            <div class="loading-overlay">
-              <p>Pesquisando música... </p>
-              <div class="loader"></div>
-            </div>
-          }
+          
           <div class="add-input-container">
-            <input type="text" [(ngModel)]="urlToAdd" (keydown.enter)="addSong()" placeholder="Nome da música"/>
-            <button (click)="addSong()">+</button>
+            <input 
+              type="text" 
+              [(ngModel)]="urlToAdd" 
+              (keydown.enter)="search()" 
+              placeholder="Buscar música..."
+              [disabled]="isSearching() || isAddingSong"
+            />
+            <button (click)="search()" [disabled]="isSearching() || isAddingSong">
+              <span class="material-symbols-outlined">search</span>
+            </button>
           </div>
         </div>
 
+         @if (isAddingSong || isSearching()) {
+            <div class="loading-overlay">
+              <p>{{ isSearching() ? 'Buscando...' : 'Adicionando...' }}</p>
+              <div class="loader"></div>
+            </div>
+          }
+
         @if (addError) {
           <div class="error">{{ addError }}</div>
+        }
+
+        @if (searchResults().length > 0) {
+          <div class="search-results-container">
+            <small>Toque para adicionar:</small>
+            <ul class="results-list">
+              @for (video of searchResults(); track video.videoId) {
+                <li (click)="addSelectedSong(video)" class="result-item">
+                  <img [src]="video.thumbnail" alt="thumb">
+                  <div class="result-info">
+                    <span class="result-title">{{ video.title }}</span>
+                  </div>
+                  <span class="material-symbols-outlined add-icon">add_circle</span>
+                </li>
+              }
+            </ul>
+          </div>
         }
       </section>
     </div>
