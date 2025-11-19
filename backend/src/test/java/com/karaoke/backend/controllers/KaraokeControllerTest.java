@@ -6,6 +6,7 @@ import com.karaoke.backend.exception.VideoNotFoundException;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.services.KaraokeService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import com.karaoke.backend.dtos.YouTubeVideoDTO;
 
 // Define a classe de teste para o Controller e suas dependências HTTP
 @WebMvcTest(KaraokeController.class)
@@ -110,12 +113,6 @@ class KaraokeControllerTest {
         when(service.getSession(ACCESS_CODE)).thenThrow(new SessionNotFoundException("Sessão não existe."));
 
         // Act & Assert
-        // Se a exceção SessionNotFoundException não for tratada por um @ControllerAdvice,
-        // o Spring geralmente retorna 500. No entanto, em um ambiente real, você esperaria
-        // um 404 (Not Found) para exceções de "não encontrado".
-        // Assumindo que você tem um tratamento para 404 no seu projeto:
-        // Se não tiver tratamento, mude para .andExpect(status().isInternalServerError()) ou
-        // implemente o tratamento de exceções. Vamos manter o 404 como ideal.
         mockMvc.perform(get("/api/sessions/" + ACCESS_CODE))
                 .andExpect(status().isNotFound()); // Idealmente, 404 para não encontrado
 
@@ -130,14 +127,22 @@ class KaraokeControllerTest {
     @WithMockUser(username = "testUser") // Simula um usuário autenticado
     void addSongToQueue_DeveRetornar201Created_QuandoAdicionadoComSucesso() throws Exception {
         // Arrange
-        String songTitle = "Bohemian Rhapsody";
-        AddSongRequestDTO requestDTO = new AddSongRequestDTO(songTitle);
+        // NOVO: Criamos o DTO com todos os campos necessários para a adição
+        YouTubeVideoDTO requestDTO = new YouTubeVideoDTO(
+                "VIDEO_ID_123",
+                "Bohemian Rhapsody (Cover)",
+                "http://thumbnail.url/img.jpg", true
+        );
 
-        // Mock do corpo da requisição
-        String requestBody = "{\"songTitle\": \"" + songTitle + "\"}";
+        // NOVO: Mock do corpo da requisição JSON (com todos os campos)
+        String requestBody = "{\"videoId\": \"VIDEO_ID_123\", \"title\": \"Bohemian Rhapsody (Cover)\", \"thumbnailUrl\": \"http://thumbnail.url/img.jpg\"}";
 
-        // Não precisamos simular o retorno, apenas que o serviço é chamado
-        doNothing().when(service).addSongToQueue(eq(ACCESS_CODE), eq(songTitle), any(User.class));
+        // NOVO: O Mock do serviço agora espera o AddSongRequestDTO, não mais apenas a String
+        doNothing().when(service).addSongToQueue(
+                eq(ACCESS_CODE), 
+                any(YouTubeVideoDTO.class), 
+                any(User.class)
+        );
 
         // Act & Assert
         mockMvc.perform(post("/api/sessions/" + ACCESS_CODE + "/queue")
@@ -145,11 +150,11 @@ class KaraokeControllerTest {
                         .content(requestBody))
                 .andExpect(status().isCreated()); // Espera status 201
 
-        // Verifica se o serviço foi chamado com os argumentos corretos
+        // NOVO: Verifica se o serviço foi chamado com o DTO correto
         verify(service, times(1)).addSongToQueue(
                 eq(ACCESS_CODE),
-                eq(songTitle),
-                any(User.class) // O MockMvc injeta um objeto User mockado
+                any(YouTubeVideoDTO.class), // Verifica se o objeto DTO foi passado
+                any(User.class)
         );
     }
 
@@ -157,12 +162,12 @@ class KaraokeControllerTest {
     @WithMockUser(username = "testUser")
     void addSongToQueue_DeveRetornar404NotFound_QuandoSessaoNaoExiste() throws Exception {
         // Arrange
-        String songTitle = "Some Song";
-        String requestBody = "{\"songTitle\": \"" + songTitle + "\"}";
+        // NOVO: Usamos o DTO completo no corpo da requisição
+        String requestBody = "{\"videoId\": \"V1\", \"title\": \"Test Song\", \"thumbnailUrl\": \"url\"}";
 
-        // Simula a exceção lançada pelo serviço
+        // NOVO: Simula a exceção com a nova assinatura do método
         doThrow(new SessionNotFoundException("Sessão inexistente.")).when(service)
-                .addSongToQueue(eq(ACCESS_CODE), eq(songTitle), any(User.class));
+                .addSongToQueue(eq(ACCESS_CODE), any(YouTubeVideoDTO.class), any(User.class));
 
         // Act & Assert
         mockMvc.perform(post("/api/sessions/" + ACCESS_CODE + "/queue")
@@ -175,18 +180,18 @@ class KaraokeControllerTest {
     @WithMockUser(username = "testUser")
     void addSongToQueue_DeveRetornar404NotFound_QuandoVideoNaoEncontrado() throws Exception {
         // Arrange
-        String songTitle = "Bad Song";
-        String requestBody = "{\"songTitle\": \"" + songTitle + "\"}";
+        // NOVO: Usamos o DTO completo no corpo da requisição
+        String requestBody = "{\"videoId\": \"V_ERR\", \"title\": \"Missing Video\", \"thumbnailUrl\": \"url\"}";
 
-        // Simula a exceção VideoNotFoundException
+        // NOVO: Simula a exceção VideoNotFoundException com a nova assinatura
         doThrow(new VideoNotFoundException("Vídeo não encontrado.")).when(service)
-                .addSongToQueue(eq(ACCESS_CODE), eq(songTitle), any(User.class));
+                .addSongToQueue(eq(ACCESS_CODE), any(YouTubeVideoDTO.class), any(User.class));
 
         // Act & Assert
         mockMvc.perform(post("/api/sessions/" + ACCESS_CODE + "/queue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isNotFound()); // Um 404 ou 400 (Bad Request) seria apropriado
+                .andExpect(status().isNotFound()); // 404 para "não encontrado"
     }
 
     // -----------------------------------------------------------------------------------
