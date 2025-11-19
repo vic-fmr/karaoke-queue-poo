@@ -1,4 +1,4 @@
-# KaraQ [nome provisório]
+# KaraQ
 
 > Sistema de Gerenciamento de Fila de Karaokê
 
@@ -72,6 +72,7 @@ O KaraQ [nome provisório] consiste em um sistema de gerenciamento de sessões d
 - Lucas Rodrigues - [@lucxsz-web](https://github.com/lucxsz-web) - [Linkedin](https://www.linkedin.com/in/lucas-rodrigues-08261b2ba/)
 - René Melo - [@renysoo](https://github.com/renysoo) - [Linkedin](https://www.linkedin.com/in/renelucena/)
 - Victor Ferreira - [@vic-fmr](https://github.com/vic-fmr) - [Linkedin](https://www.linkedin.com/in/victor-ferreira-marques/)
+
 
 
 
