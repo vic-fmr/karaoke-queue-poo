@@ -23,10 +23,12 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity // Ajuste conforme a origem do seu frontend
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+    // JwtAuthFilter is optional in test slices; make injection optional to avoid
+    // ApplicationContext failures in WebMvcTest where the full filter chain isn't present.
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -65,13 +67,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT é STATELESS
-                .authorizeHttpRequests(authorize -> authorize
-                        // Permite acesso público ao cadastro e login
-                        .requestMatchers( "/auth/**").permitAll()
-                        // Todas as outras rotas exigem autenticação
-                        .anyRequest().permitAll()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        .authorizeHttpRequests(authorize -> authorize
+            // Permite acesso público ao cadastro e login
+            .requestMatchers("/auth/**").permitAll()
+            // Todas as outras rotas exigem autenticação
+            .anyRequest().authenticated()
+        );
+
+    if (jwtAuthFilter != null) {
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+    }
 
         return http.build();
     }

@@ -28,6 +28,8 @@ public class KaraokeController {
 
     @Autowired
     private KaraokeService service;
+    @Autowired(required = false)
+    private com.karaoke.backend.services.FilaService filaService;
 
     @PostMapping
     public ResponseEntity<KaraokeSession> createSession() {
@@ -47,6 +49,22 @@ public class KaraokeController {
     public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode){
         KaraokeSession session = service.getSession(sessionCode.toUpperCase());
         return ResponseEntity.ok(session);
+    }
+
+    // Endpoint temporário de debug: retorna a fila justa (fair queue) calculada pelo servidor.
+    @GetMapping("/{sessionCode}/fairQueue")
+    public ResponseEntity<com.karaoke.backend.dtos.FilaUpdateDTO> getFairQueue(@PathVariable String sessionCode) {
+    KaraokeSession session = service.getSession(sessionCode.toUpperCase());
+    java.util.List<com.karaoke.backend.models.QueueItem> fair = filaService == null
+        ? java.util.List.of()
+        : filaService.computeFairOrder(session);
+        java.util.List<com.karaoke.backend.dtos.QueueItemDTO> dtoList = fair.stream()
+                .map(com.karaoke.backend.dtos.QueueItemDTO::fromEntity)
+                .toList();
+        com.karaoke.backend.dtos.QueueItemDTO nowPlaying = dtoList.isEmpty() ? null : dtoList.get(0);
+        com.karaoke.backend.dtos.FilaUpdateDTO dto = new com.karaoke.backend.dtos.FilaUpdateDTO(dtoList, nowPlaying,
+                session.getStatus() == null ? null : session.getStatus().name());
+        return ResponseEntity.ok(dto);
     }
 
 @PostMapping("/{sessionCode}/queue")
