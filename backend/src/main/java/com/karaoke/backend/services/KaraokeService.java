@@ -106,4 +106,28 @@ public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, Use
         // Notifica todos os clientes via WebSocket
         filaService.notificarAtualizacaoFila(accessCode);
     }
+
+    @Transactional
+    public Optional<QueueItem> playNextSong(String accessCode) {
+    KaraokeSession session = getSession(accessCode);
+    List<QueueItem> queue = session.getSongQueue();
+
+    if (queue.isEmpty()) {
+        System.out.println("LOG: Fila de sessão " + accessCode + " vazia. Nenhuma música para tocar.");
+        return Optional.empty();
+    }
+
+    QueueItem nextItem = queue.get(0); 
+
+    queue.remove(0); 
+    
+    sessionRepository.save(session);
+    
+    filaService.notificarAtualizacaoFila(accessCode);
+    
+    System.out.println("LOG: Próxima música (" + nextItem.getSong().getTitle() + 
+                       ") selecionada e removida da fila da sessão " + accessCode);
+
+    return Optional.of(nextItem);
+}
 }
