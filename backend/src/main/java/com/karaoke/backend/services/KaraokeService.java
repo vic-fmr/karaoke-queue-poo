@@ -3,21 +3,19 @@ package com.karaoke.backend.services;
 import java.util.List;
 import java.util.Optional;
 
-import com.karaoke.backend.dtos.SessionResponseDTO;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
+import com.karaoke.backend.exception.SessionNotFoundException;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
 import com.karaoke.backend.repositories.QueueItemRepository;
-import com.karaoke.backend.repositories.SongRepository;
-import com.karaoke.backend.exception.SessionNotFoundException;
-import com.karaoke.backend.exception.VideoNotFoundException;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Service
@@ -60,37 +58,37 @@ public class KaraokeService {
         System.out.println("LOG: Sessão finalizada: " + accessCode);
     }
 
-    @Transactional
-    public void addSongToQueue(String accessCode, String songTitle, User user) {
-        KaraokeSession session = getSession(accessCode);
+@Transactional
+// Mudança na assinatura: agora recebe um YouTubeVideoDTO (o vídeo escolhido)
+public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, User user) {
+    KaraokeSession session = getSession(accessCode);
 
-        // --- 1. LÓGICA DE INTEGRAÇÃO COM YOUTUBE ---
-        String searchQuery = songTitle + " karaoke";
-        List<YouTubeVideoDTO> validVideos = youTubeService.searchVideos(searchQuery);
+    // --- 1. LÓGICA DE YOUTUBE (REMOVIDA A BUSCA) ---
+    // A busca foi removida daqui. Confiamos que o Controller
+    // nos passou o vídeo que o usuário selecionou.
+    
+    // Opcional: Se você quiser validar se o vídeo ainda existe ou pegar 
+    // a duração exata, poderia chamar o youtubeService.getVideoDetails(id),
+    // mas para performance, geralmente usamos o que o front mandou.
 
-        if (validVideos.isEmpty()) {
-            throw new VideoNotFoundException("Não foi encontrado um vídeo válido e incorporável...");
-        }
-
-        YouTubeVideoDTO bestVideo = validVideos.getFirst();
-
-        // --- 2. LÓGICA DE USUÁRIO ---
-        if (user.getSession() == null || !user.getSession().getId().equals(session.getId())) {
-            session.addUser(user); // Garante a associação bidirecional
-        }
-
-        // --- 3. LÓGICA DE MÚSICA ---
-        Song song = songService.createSongFromVideo(bestVideo);
-
-        // --- 4. ADICIONA À FILA ---
-        QueueItem queueItem = new QueueItem(session, user, song);
-        session.addQueueItem(queueItem);
-        sessionRepository.save(session);
-        System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
-
-        // --- 5. NOTIFICAÇÃO ---
-        filaService.notificarAtualizacaoFila(accessCode);
+    // --- 2. LÓGICA DE USUÁRIO ---
+    if (user.getSession() == null || !user.getSession().getId().equals(session.getId())) {
+        session.addUser(user); 
     }
+
+    // --- 3. LÓGICA DE MÚSICA ---
+    // Reaproveita seu método existente, passando o vídeo recebido
+    Song song = songService.createSongFromVideo(selectedVideo);
+
+    // --- 4. ADICIONA À FILA ---
+    QueueItem queueItem = new QueueItem(session, user, song);
+    session.addQueueItem(queueItem);
+    sessionRepository.save(session);
+    System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
+
+    // --- 5. NOTIFICAÇÃO ---
+    filaService.notificarAtualizacaoFila(accessCode);
+}
 
     @Transactional
     public void deleteSongFromQueue(String accessCode, Long queueItemId) {

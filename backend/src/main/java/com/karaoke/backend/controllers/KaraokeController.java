@@ -3,7 +3,6 @@ package com.karaoke.backend.controllers;
 import java.net.URI;
 import java.util.List;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,10 +14,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.karaoke.backend.models.User;
 import com.karaoke.backend.dtos.AddSongRequestDTO;
+import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.models.KaraokeSession;
+import com.karaoke.backend.models.User;
 import com.karaoke.backend.services.KaraokeService;
+
+import lombok.RequiredArgsConstructor;
 
 
 @RestController
@@ -49,19 +51,25 @@ public class KaraokeController {
         return ResponseEntity.ok(session);
     }
 
-    @PostMapping("/{sessionCode}/queue")
-    public ResponseEntity<Void> addSongToQueue(
-        @PathVariable String sessionCode, 
-        @RequestBody AddSongRequestDTO request,
-        @AuthenticationPrincipal User authenticatedUser
-    ) {
-        service.addSongToQueue(
-            sessionCode,
-            request.songTitle(),
-            authenticatedUser
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+@PostMapping("/{sessionCode}/queue")
+public ResponseEntity<Void> addSongToQueue(
+    @PathVariable String sessionCode, 
+    @RequestBody AddSongRequestDTO request,
+    @AuthenticationPrincipal User authenticatedUser
+) {
+    YouTubeVideoDTO videoEscolhido = new YouTubeVideoDTO();
+    videoEscolhido.setVideoId(request.videoId());
+    videoEscolhido.setTitle(request.title());
+    videoEscolhido.setThumbnail(request.thumbnailUrl());
+    
+    service.addSongToQueue(
+        sessionCode,
+        videoEscolhido,
+        authenticatedUser
+    );
+    
+    return ResponseEntity.status(HttpStatus.CREATED).build();
+}
 
     @DeleteMapping("/{sessionCode}")
     public ResponseEntity<Void> endSession(@PathVariable String sessionCode){

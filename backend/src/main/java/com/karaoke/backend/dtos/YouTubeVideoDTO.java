@@ -1,18 +1,25 @@
 package com.karaoke.backend.dtos;
 
-public record YouTubeVideoDTO(
-    String videoId,         
-    String title,            
-    String embedUrl,
-    String thumbnail,         
-    boolean probablyEmbeddable 
-) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    public YouTubeVideoDTO(String videoId, String title, String thumbnail ,boolean probablyEmbeddable) {
-        this(videoId, 
-             title, 
-             "https://www.youtube.com/embed/" + videoId, // Monta a URL de embed aqui
-             thumbnail,
-             probablyEmbeddable);
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class YouTubeVideoDTO {
+
+    private String videoId;
+    private String title;
+    private String embedUrl;
+    private String thumbnail;
+    private boolean probablyEmbeddable;
+
+    public YouTubeVideoDTO(String videoId, String title, String thumbnail, boolean probablyEmbeddable) {
+        this.videoId = videoId;
+        this.title = title;
+        this.thumbnail = thumbnail;
+        this.probablyEmbeddable = probablyEmbeddable;
+        this.embedUrl = "https://www.youtube.com/embed/" + videoId;
     }
 }

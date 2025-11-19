@@ -1,3 +1,6 @@
+/* =========================================
+   CSS GLOBAL DA SESSÃO
+   ========================================= */
 
 li {
   list-style: none;
@@ -9,11 +12,10 @@ li {
   display: flex;
   flex-direction: column;
   font-size: 1rem;
-  padding: 40px; /* Reduzido o padding geral */
+  padding: 40px;
   gap: 40px;
   background: var(--bg-dark);
   color: var(--text-light);
-  /* Adiciona um gradiente sutil no fundo para profundidade */
   background-image: radial-gradient(circle at top left, rgba(168, 85, 247, 0.1) 0%, transparent 40%),
   radial-gradient(circle at bottom right, rgba(224, 0, 32, 0.1) 0%, transparent 40%);
 }
@@ -25,6 +27,7 @@ header {
   padding-bottom: 15px;
   display: flex;
   gap: 20px;
+  align-items: center;
 }
 
 header h2 {
@@ -32,12 +35,21 @@ header h2 {
   color: var(--primary-color);
   font-weight: 700;
   letter-spacing: 1px;
+  margin: 0;
+}
+
+header button {
+  /* Ajuste para o botão home ficar alinhado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
 }
 
 /* --- Container de Conteúdo --- */
 .content-container {
   width: 100%;
-  max-width: 1400px; /* Limite máximo para telas grandes */
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   padding: 0 20px;
@@ -49,7 +61,7 @@ section {
   background: var(--bg-card);
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Sombra para destacar */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   margin-bottom: 20px;
 }
 
@@ -63,14 +75,14 @@ h3, h4 {
 
 /* --- Fila de Música --- */
 .music-queue-container {
-  flex: 3; /* Ocupa mais espaço */
+  flex: 3;
   min-width: 0;
 }
 
 /* Tocando Agora */
 .now-playing {
   border: 1px solid var(--primary-color);
-  background: linear-gradient(135deg, var(--bg-card), #370c4d); /* Gradiente sutil */
+  background: linear-gradient(135deg, var(--bg-card), #370c4d);
   animation: pulse 2s infinite alternate;
 }
 
@@ -107,32 +119,35 @@ h3, h4 {
   justify-content: center;
   align-items: center;
   gap: 20px;
-
 }
 
-img {
+/* Imagem Genérica (Fantasma/Waiting) */
+img.waiting-icon {
   width: 150px;
   height: auto;
   animation: flutuar 3s ease-in-out infinite alternate;
 }
 
+@keyframes flutuar {
+  from { transform: translateY(0); }
+  to { transform: translateY(-15px); }
+}
+
 .queue ol {
   max-height: 300px;
-  overflow-y: auto; /* Scroll para listas longas */
+  overflow-y: auto;
   padding-right: 5px;
 }
 
-/* Estilo da barra de rolagem */
-.queue ol::-webkit-scrollbar {
+/* Scrollbar customizada geral */
+::-webkit-scrollbar {
   width: 8px;
 }
-
-.queue ol::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background-color: var(--primary-dark);
   border-radius: 4px;
 }
-
-.queue ol::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background-color: var(--bg-card);
 }
 
@@ -153,7 +168,7 @@ img {
 }
 
 .song-item.mine {
-  border-left: 5px solid var(--primary-color); /* Destaque para a própria música */
+  border-left: 5px solid var(--primary-color);
   background: var(--bg-dark);
 }
 
@@ -175,16 +190,19 @@ img {
   font-size: 1.4rem;
   opacity: 0.7;
   transition: opacity 0.2s;
+  padding: 0;
 }
 
 .actions .remove:hover {
   opacity: 1;
   color: #ff4d4d;
+  background: transparent;
+  transform: none;
 }
 
 /* --- Sidebar (Usuários e Adicionar Música) --- */
 .content-sidebar {
-  flex: 1; /* Ocupa menos espaço que a fila */
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -195,6 +213,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 0;
 }
 
 .connected-users-container ul li {
@@ -213,7 +232,7 @@ img {
 
 /* Adicionar Música */
 .add-song {
-  margin-top: auto; /* Empurra para o final da sidebar */
+  margin-bottom: auto;
 }
 
 .add-row {
@@ -246,17 +265,50 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
 }
 
+.add-row input {
+  flex: 1;
+}
+
+.add-row button, button {
+  padding: 8px 12px;
+  border: none;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex; /* Centraliza o ícone */
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.add-row button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.add-row button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loader */
 .loading-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 15px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 1rem;
 }
 
 .loader {
-  height: 40px;
+  height: 25px; /* Ajustado para não ficar gigante */
   aspect-ratio: 1;
-  padding: 5px;
+  padding: 4px;
   border-radius: 50%;
   box-sizing: border-box;
   position: relative;
@@ -273,30 +325,7 @@ input:focus {
 }
 
 @keyframes l2 {
-  to {
-    rotate: 1turn
-  }
-}
-
-.add-row input {
-  flex: 1;
-}
-
-.add-row button, button {
-  padding: 8px 16px;
-  border: none;
-  background: var(--primary-color);
-  color: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-  transition: background 0.2s, transform 0.1s;
-}
-
-.add-row button:hover {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
+  to { rotate: 1turn }
 }
 
 .error {
@@ -309,10 +338,94 @@ input:focus {
   border-left: 3px solid var(--error-color);
 }
 
+/* =========================================
+   NOVOS ESTILOS: RESULTADOS DA BUSCA
+   ========================================= */
+
+.search-results-container {
+  margin-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 15px;
+  max-height: 350px; /* Limita altura na sidebar */
+  overflow-y: auto;
+}
+
+.search-results-container small {
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.results-list {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-item);
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  border: 1px solid transparent;
+}
+
+.result-item:hover {
+  background: var(--bg-dark);
+  border-color: var(--primary-color);
+  transform: scale(1.02);
+}
+
+/* IMPORTANTE: Reset da animação global de img para thumbnails do Youtube */
+.result-item img {
+  width: 60px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+  animation: none; /* Remove a animação de flutuar da thumbnail */
+}
+
+.result-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.result-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-light);
+  line-height: 1.3;
+  /* Truncar texto longo */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.add-icon {
+  color: #4caf50; /* Verde Add */
+  font-size: 24px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.result-item:hover .add-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
 /* --- Responsividade (Telas Menores) --- */
 @media (max-width: 900px) {
   .content-container {
-    flex-direction: column-reverse; /* Pilha as colunas em telas menores */
+    flex-direction: column-reverse;
     padding: 0 10px;
     gap: 20px;
   }
@@ -326,21 +439,20 @@ input:focus {
     gap: 30px;
   }
 
-  /* Faz a sidebar ficar no topo em telas menores */
   .content-sidebar {
     order: -1;
   }
 
   .music-queue-container, .content-sidebar {
-    flex: none; /* Remove o flex */
+    flex: none;
     width: 100%;
   }
 
   .connected-users-container {
-    margin-bottom: 0; /* Remove margem */
+    margin-bottom: 0;
   }
 
   .add-song {
-    margin-top: 0; /* Remove o empurrão para o fundo */
+    margin-top: 0;
   }
 }
