@@ -13,17 +13,10 @@ public class RestExceptionHandler {
 
     // --- 1. TRATAMENTO PARA 404 NOT FOUND ---
     @ExceptionHandler({SessionNotFoundException.class, VideoNotFoundException.class})
-    public ResponseEntity<ErrorDetails> handleNotFoundException(RuntimeException ex) {
+    public ResponseEntity<String> handleNotFoundException(RuntimeException ex) {
         HttpStatus status = HttpStatus.NOT_FOUND;
-
-
-        ErrorDetails details = new ErrorDetails(
-                status.value(),
-                status.getReasonPhrase(), // "Not Found"
-                ex.getMessage()
-        );
-
-        return ResponseEntity.status(status).body(details);
+        // Para compatibilidade com testes existentes, retornamos apenas a mensagem simples
+        return ResponseEntity.status(status).body(ex.getMessage());
     }
 
     // --- 2. TRATAMENTO PARA 400 BAD REQUEST ---

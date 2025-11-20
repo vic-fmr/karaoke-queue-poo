@@ -88,19 +88,20 @@ export class Session implements OnInit, OnDestroy {
     localStorage.setItem('currentSessionCode', this.sessionCode);
     this.connectedUsers.set([{id: this.userId, name: this.userName}]);
 
-    // 1) Estado inicial via REST
-    const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe({
-      next: (session: KaraokeSession) => {
-        const mappedQueue = this.mapEntitiesToView(session.songQueue);
-        console.log('[Session] Estado inicial da sessão carregado:', session);
-        console.log('[Session] Fila mapeada:', mappedQueue);
-        
-        this.queue.set(mappedQueue);
-        // Agora usamos o 'nowPlaying' que vem da API
-        this.current.set(session.nowPlaying ? this.mapDtoToView(session.nowPlaying) : null);
+    // 1) Estado inicial via REST -> agora buscamos a fila justa calculada no servidor
+    const initialLoadSub = this.karaokeService.getFairQueue(this.sessionCode).subscribe({
+      next: (filaUpdate: any) => {
+        try {
+          const mappedQueue = this.mapDtosToView(filaUpdate.songQueue || []);
+          this.queue.set(mappedQueue);
+          this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
+        } catch (e) {
+          console.error('[Session] Erro ao processar fila justa:', e);
+          this.addError = 'Erro ao carregar a fila.';
+        }
       },
       error: (err) => {
-        console.error('[Session] ❌ Erro ao carregar sessão:', err);
+        console.error('[Session] ❌ Erro ao carregar sessão (fairQueue):', err);
         this.addError = 'Não foi possível carregar a sessão.';
       }
     });

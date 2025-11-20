@@ -68,16 +68,23 @@ export class Home {
     this.error = null;
     this.loading = true;
 
+    // Ensure user is authenticated
+    if (!this.authService.isAuthenticated()) {
+      this.loading = false;
+      // Redirect to login
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.ks.createSession().subscribe({
-      next: (newSession) => {
-        console.log('Sessão criada com sucesso:', newSession);
+      next: (session) => {
+        // navigate to the newly created session
         this.loading = false;
-        // Redireciona para a tela da sessão usando o código gerado pelo backend
-        this.router.navigate(['/host', newSession.accessCode]);
+        this.router.navigate(['/session', session.accessCode]);
       },
       error: (err) => {
         console.error('Erro ao criar sessão:', err);
-        this.error = 'Erro ao criar nova sessão. Tente novamente.';
+        this.error = 'Não foi possível criar a sessão.';
         this.loading = false;
       }
     });

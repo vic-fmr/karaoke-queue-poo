@@ -61,7 +61,7 @@ export class KaraokeService {
   // Ajuste conforme suas rotas no Backend.
   // Se seu SongController tem @RequestMapping("/songs"), a busca fica em /songs/search
   private sessionsApiUrl = `${this.baseUrl}/api/sessions`;
-  private songsApiUrl = `${this.baseUrl}/api/videos`; 
+  private songsApiUrl = `${this.baseUrl}/api/videos`;
 
   constructor(private http: HttpClient) {}
 
@@ -86,6 +86,11 @@ export class KaraokeService {
 
   createSession(): Observable<KaraokeSession> {
     return this.http.post<KaraokeSession>(this.sessionsApiUrl, {});
+  }
+
+  // Returns the server-calculated fair queue (FilaUpdateDTO)
+  getFairQueue(sessionCode: string) {
+    return this.http.get<any>(`${this.sessionsApiUrl}/${sessionCode}/fairQueue`);
   }
 
   // --- Métodos de Vídeo / Busca ---

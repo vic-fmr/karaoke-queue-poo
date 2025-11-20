@@ -17,15 +17,21 @@ public class SongService {
 
     @Transactional
     public Song createSongFromVideo(YouTubeVideoDTO videoDTO) {
-        Song song = new Song(
+    // Evita duplicatas: se já existe uma música com o mesmo youtubeVideoId, retorna-a
+    return songRepository.findByYoutubeVideoId(videoDTO.getVideoId())
+        .orElseGet(() -> {
+            Song song = new Song(
                 videoDTO.getVideoId(),
                 videoDTO.getTitle(),
                 "Artista Desconhecido",
                 videoDTO.getEmbedUrl()
-        );
-        Song savedSong = songRepository.save(song);
-        System.out.println("LOG: Nova música criada no banco: " + savedSong.getTitle() +
+            );
+            Song savedSong = songRepository.save(song);
+            System.out.println("LOG: Nova música criada no banco: " + savedSong.getTitle() +
                 " (YouTube ID: " + savedSong.getYoutubeVideoId() + ")");
-        return savedSong;
+            // Debug: imprimir stack trace para identificar chamadas duplicadas
+            new Exception("Stack trace for song creation").printStackTrace(System.out);
+            return savedSong;
+        });
     }
 }

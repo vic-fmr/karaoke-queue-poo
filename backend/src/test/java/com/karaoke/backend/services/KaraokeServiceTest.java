@@ -34,6 +34,8 @@ class KaraokeServiceTest {
     private YoutubeService youTubeService;
     @Mock
     private SongService songService;
+    @Mock
+    private com.karaoke.backend.repositories.UserRepository userRepository;
 
     @InjectMocks
     private KaraokeService karaokeService;
