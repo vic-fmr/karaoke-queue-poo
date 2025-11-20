@@ -2,6 +2,7 @@ package com.karaoke.backend.controllers;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.karaoke.backend.dtos.AddSongRequestDTO;
+import com.karaoke.backend.dtos.QueueItemDTO;
+import com.karaoke.backend.dtos.SessionResponseDTO;
+import com.karaoke.backend.dtos.UserDTO;
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.User;
@@ -43,9 +47,32 @@ public class KaraokeController {
     }
 
     @GetMapping("/{sessionCode}")
-    public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode) {
+    public ResponseEntity<SessionResponseDTO> getSession(@PathVariable String sessionCode) {
         KaraokeSession session = service.getSession(sessionCode);
-        return ResponseEntity.ok(session);
+
+        // Mapeia a fila e os usuários para DTOs
+        List<QueueItemDTO> queueDTOs = session.getSongQueue().stream()
+                .map(QueueItemDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        List<UserDTO> userDTOs = session.getConnectedUsers().stream()
+                .map(UserDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        // Define o que está tocando (primeiro da fila)
+        QueueItemDTO nowPlaying = queueDTOs.isEmpty() ? null : queueDTOs.get(0);
+
+        // Cria e retorna o DTO de resposta
+        SessionResponseDTO responseDTO = new SessionResponseDTO(
+                session.getId(),
+                session.getAccessCode(),
+                session.getStatus().name(),
+                userDTOs,
+                queueDTOs,
+                nowPlaying
+        );
+
+        return ResponseEntity.ok(responseDTO);
     }
 
     @PostMapping("/{sessionCode}/queue")

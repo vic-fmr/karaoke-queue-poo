@@ -12,7 +12,7 @@
 /* Área do logo */
 .header-box {
   width: 100%;
-  max-width: 350px; /* Um bom tamanho para o logo */
+  max-width: 250px; /* Um bom tamanho para o logo */
   margin-bottom: 2.5rem;
 }
 

@@ -92,8 +92,12 @@ export class Session implements OnInit, OnDestroy {
     const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe({
       next: (session: KaraokeSession) => {
         const mappedQueue = this.mapEntitiesToView(session.songQueue);
+        console.log('[Session] Estado inicial da sessão carregado:', session);
+        console.log('[Session] Fila mapeada:', mappedQueue);
+        
         this.queue.set(mappedQueue);
-        this.current.set(null);
+        // Agora usamos o 'nowPlaying' que vem da API
+        this.current.set(session.nowPlaying ? this.mapDtoToView(session.nowPlaying) : null);
       },
       error: (err) => {
         console.error('[Session] ❌ Erro ao carregar sessão:', err);

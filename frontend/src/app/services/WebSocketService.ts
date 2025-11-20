@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {Client, IMessage} from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import {Observable, Subject} from 'rxjs';
+import {environment} from '../enviroments/environment';
 
 // Interface que corresponde ao FilaUpdateDTO do backend
 export interface QueueItemDTO {
@@ -29,8 +30,8 @@ export class WebSocketService {
     this.filaUpdates$ = this.filaUpdatesSubject.asObservable();
     this.client = new Client({
       webSocketFactory: () => {
-        console.log('[WebSocket] Criando conexão SockJS para http://localhost:8080/ws');
-        return new SockJS('http://localhost:8080/ws');
+        console.log(`[WebSocket] Criando conexão SockJS para ${environment.apiUrl}/ws`);
+        return new SockJS(`${environment.apiUrl}/ws`);
       },
       reconnectDelay: 5000,
       debug: (str) => {

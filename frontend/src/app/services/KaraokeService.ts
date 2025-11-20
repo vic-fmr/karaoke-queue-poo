@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../enviroments/environment';
+import { QueueItemDTO } from './WebSocketService';
 
 // --- INTERFACES (Models) ---
 
@@ -31,6 +33,7 @@ export interface KaraokeSession {
   status: 'WAITING' | 'PLAYING' | 'CLOSED' | string;
   connectedUsers: User[];
   songQueue: QueueItemEntity[];
+  nowPlaying?: QueueItemDTO | null;
 }
 
 // 1. ATUALIZADO: Interface para o POST (corpo da requisição)
@@ -53,7 +56,7 @@ export interface YouTubeVideo {
 
 @Injectable({ providedIn: 'root' })
 export class KaraokeService {
-  private baseUrl = 'http://localhost:8080';
+  private baseUrl = environment.apiUrl;
   
   // Ajuste conforme suas rotas no Backend.
   // Se seu SongController tem @RequestMapping("/songs"), a busca fica em /songs/search
