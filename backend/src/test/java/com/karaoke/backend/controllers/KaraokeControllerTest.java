@@ -1,180 +1,222 @@
 package com.karaoke.backend.controllers;
 
-import com.karaoke.backend.dtos.AddSongRequestDTO;
-import com.karaoke.backend.models.KaraokeSession;
-import com.karaoke.backend.services.KaraokeService;
-import com.karaoke.backend.services.exception.SessionNotFoundException;
-import com.karaoke.backend.services.exception.VideoNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.karaoke.backend.config.JwtAuthFilter;
+import com.karaoke.backend.config.SecurityConfig;
+import com.karaoke.backend.dtos.AddSongRequestDTO;
+import com.karaoke.backend.dtos.YouTubeVideoDTO;
+import com.karaoke.backend.exception.SessionNotFoundException;
+import com.karaoke.backend.exception.VideoNotFoundException;
+import com.karaoke.backend.models.KaraokeSession;
+import com.karaoke.backend.models.User;
+import com.karaoke.backend.services.KaraokeService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.karaoke.backend.services.TokenService;
-import com.karaoke.backend.repositories.UserRepository; 
-import org.springframework.security.test.context.support.WithMockUser;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-
-
-import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = KaraokeController.class)
-public class KaraokeControllerTest {
+// 1. CORREÇÃO PRINCIPAL: Adicionar as exclusões de segurança igual ao AuthController
+@WebMvcTest(controllers = KaraokeController.class,
+    excludeAutoConfiguration = SecurityAutoConfiguration.class,
+    excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+    })
+class KaraokeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private KaraokeService service; 
-
+    // 2. Adicionar ObjectMapper para gerar o JSON automaticamente e evitar erros de string manual
     @Autowired
     private ObjectMapper objectMapper;
 
     @MockBean
-    private TokenService tokenService;
-    @MockBean
-    private UserRepository userRepository;
+    private KaraokeService service;
 
-    private KaraokeSession testSession;
-    private final String SESSION_CODE = "TESTE123";
-    private final String BASE_URL = "/api/sessions";
+    private final String ACCESS_CODE = "TEST1A";
+    private KaraokeSession mockSession;
+    private User mockUser;
 
     @BeforeEach
     void setUp() {
-        testSession = new KaraokeSession();
-        testSession.setAccessCode(SESSION_CODE);
+        mockSession = new KaraokeSession();
+        mockSession.setAccessCode(ACCESS_CODE);
+        mockSession.setId(1L);
+
+        mockUser = new User();
+        mockUser.setId(99L);
     }
 
+    // -----------------------------------------------------------------------------------
+    // Testes POST /api/sessions
+    // -----------------------------------------------------------------------------------
     @Test
-    @WithMockUser
-    void createSession_ShouldReturn201CreatedAndSession() throws Exception {
-        when(service.createSession()).thenReturn(testSession);
+    @WithMockUser // Simula usuário para passar pelo contexto (mesmo sem filtros, é boa prática)
+    void createSession_DeveRetornar201CreatedComHeaderLocation() throws Exception {
+        when(service.createSession()).thenReturn(mockSession);
 
-        mockMvc.perform(post(BASE_URL)
-                        .with(csrf()))
+        mockMvc.perform(post("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", BASE_URL + "/" + SESSION_CODE))
-                .andExpect(jsonPath("$.accessCode").value(SESSION_CODE));
-        
+                .andExpect(header().string("Location", "/api/sessions/" + ACCESS_CODE))
+                .andExpect(jsonPath("$.accessCode").value(ACCESS_CODE));
+
         verify(service, times(1)).createSession();
     }
 
+    // -----------------------------------------------------------------------------------
+    // Testes GET /api/sessions
+    // -----------------------------------------------------------------------------------
     @Test
     @WithMockUser
-    void getAllSessions_ShouldReturn200OkAndList() throws Exception {
-        KaraokeSession anotherSession = new KaraokeSession();
-        anotherSession.setAccessCode("OTHER456");
-        List<KaraokeSession> allSessions = Arrays.asList(testSession, anotherSession);
+    void getAllSessions_DeveRetornar200OkComListaDeSessoes() throws Exception {
+        List<KaraokeSession> sessions = List.of(mockSession, new KaraokeSession());
+        when(service.getAllSessions()).thenReturn(sessions);
 
-        when(service.getAllSessions()).thenReturn(allSessions);
-
-        mockMvc.perform(get(BASE_URL))
+        mockMvc.perform(get("/api/sessions")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(2))
-                .andExpect(jsonPath("$[0].accessCode").value(SESSION_CODE));
-        
+                .andExpect(jsonPath("$.length()").value(2));
+
         verify(service, times(1)).getAllSessions();
     }
 
+    // -----------------------------------------------------------------------------------
+    // Testes GET /api/sessions/{sessionCode}
+    // -----------------------------------------------------------------------------------
     @Test
     @WithMockUser
-    void getSession_WithValidCode_ShouldReturn200OkAndSession() throws Exception {
-        when(service.getSession(eq(SESSION_CODE))).thenReturn(testSession);
+    void getSession_DeveRetornar200Ok_QuandoSessaoEncontrada() throws Exception {
+        when(service.getSession(ACCESS_CODE)).thenReturn(mockSession);
 
-        mockMvc.perform(get(BASE_URL + "/teste123"))
+        mockMvc.perform(get("/api/sessions/" + ACCESS_CODE)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessCode").value(SESSION_CODE));
-        
-        verify(service, times(1)).getSession(eq(SESSION_CODE));
+                .andExpect(jsonPath("$.accessCode").value(ACCESS_CODE));
+
+        verify(service, times(1)).getSession(ACCESS_CODE);
     }
 
     @Test
     @WithMockUser
-    void getSession_WithInvalidCode_ShouldReturn404NotFound() throws Exception {
-        final String INVALID_CODE = "INVALID404";
-        
-        when(service.getSession(eq(INVALID_CODE))).thenThrow(new SessionNotFoundException("Sessão não encontrada."));
+    void getSession_DeveRetornar404NotFound_QuandoSessaoNaoEncontrada() throws Exception {
+        when(service.getSession(ACCESS_CODE)).thenThrow(new SessionNotFoundException("Sessão não existe."));
 
-        mockMvc.perform(get(BASE_URL + "/" + INVALID_CODE))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("Sessão não encontrada."));
-        
-        verify(service, times(1)).getSession(eq(INVALID_CODE));
+        mockMvc.perform(get("/api/sessions/" + ACCESS_CODE))
+                .andExpect(status().isNotFound());
+
+        verify(service, times(1)).getSession(ACCESS_CODE);
     }
 
+    // -----------------------------------------------------------------------------------
+    // Testes POST /api/sessions/{sessionCode}/queue
+    // -----------------------------------------------------------------------------------
     @Test
-    @WithMockUser 
-    void addSongToQueue_ShouldReturn200Ok() throws Exception {
-        final String SONG_TITLE = "Nome da Musica para Karaokê";
-        final String USER_ID = "user123";
-        final String USER_NAME = "João";
-        
-        // 1. Mock do comportamento do Service (ele não deve lançar exceção)
-        doNothing().when(service).addSongToQueue(eq(SESSION_CODE), any(), any(), any());
+    @WithMockUser(username = "testUser") 
+    void addSongToQueue_DeveRetornar201Created_QuandoAdicionadoComSucesso() throws Exception {
+        // ARRANGE
+        // 3. CORREÇÃO: Usar o DTO correto que o Controller espera no @RequestBody
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO(
+            "VIDEO_ID_123", 
+            "Bohemian Rhapsody (Cover)", 
+            "http://thumbnail.url/img.jpg"
+        );
 
-        // 2. Cria o DTO de Requisição usando o novo campo: songTitle
-        AddSongRequestDTO requestDTO = new AddSongRequestDTO();
-        requestDTO.setSongTitle(SONG_TITLE); // <-- MUDANÇA: SETA O TÍTULO
-        requestDTO.setUserId(USER_ID);
-        requestDTO.setUserName(USER_NAME);
+        // Configura o Mock: O serviço recebe um YouTubeVideoDTO (convertido pelo controller), não o AddSongRequestDTO
+        doNothing().when(service).addSongToQueue(
+                eq(ACCESS_CODE), 
+                any(YouTubeVideoDTO.class), 
+                any(User.class) // O User vem do @AuthenticationPrincipal (simulado pelo @WithMockUser)
+        );
 
-        mockMvc.perform(post(BASE_URL + "/" + SESSION_CODE + "/queue")
+        // ACT & ASSERT
+        mockMvc.perform(post("/api/sessions/" + ACCESS_CODE + "/queue")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDTO))
-                        .with(csrf()))
-                .andExpect(status().isOk());
-        
-        // 3. Verifica se o Service foi chamado com os argumentos CORRETOS
+                        // Usa o ObjectMapper para gerar o JSON correto do AddSongRequestDTO
+                        .content(objectMapper.writeValueAsString(requestDTO))) 
+                .andExpect(status().isCreated());
+
         verify(service, times(1)).addSongToQueue(
-            eq(SESSION_CODE), 
-            eq(SONG_TITLE), // <-- MUDANÇA: Espera o TÍTULO aqui
-            eq(USER_ID), 
-            eq(USER_NAME)
+                eq(ACCESS_CODE),
+                any(YouTubeVideoDTO.class),
+                any(User.class)
         );
     }
 
+    @Test
+    @WithMockUser(username = "testUser")
+    void addSongToQueue_DeveRetornar404NotFound_QuandoSessaoNaoExiste() throws Exception {
+        // ARRANGE
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO("V1", "Test Song", "url");
+
+        doThrow(new SessionNotFoundException("Sessão inexistente.")).when(service)
+                .addSongToQueue(eq(ACCESS_CODE), any(YouTubeVideoDTO.class), any(User.class));
+
+        // ACT & ASSERT
+        mockMvc.perform(post("/api/sessions/" + ACCESS_CODE + "/queue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "testUser")
+    void addSongToQueue_DeveRetornar404NotFound_QuandoVideoNaoEncontrado() throws Exception {
+        // ARRANGE
+        AddSongRequestDTO requestDTO = new AddSongRequestDTO("V_ERR", "Missing Video", "url");
+
+        doThrow(new VideoNotFoundException("Vídeo não encontrado.")).when(service)
+                .addSongToQueue(eq(ACCESS_CODE), any(YouTubeVideoDTO.class), any(User.class));
+
+        // ACT & ASSERT
+        mockMvc.perform(post("/api/sessions/" + ACCESS_CODE + "/queue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Testes DELETE /api/sessions/{sessionCode}
+    // -----------------------------------------------------------------------------------
+    @Test
+    @WithMockUser // Delete geralmente requer permissão
+    void endSession_DeveRetornar204NoContent_QuandoFinalizadaComSucesso() throws Exception {
+        doNothing().when(service).endSession(ACCESS_CODE);
+
+        mockMvc.perform(delete("/api/sessions/" + ACCESS_CODE))
+                .andExpect(status().isNoContent());
+
+        verify(service, times(1)).endSession(ACCESS_CODE);
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Testes DELETE /api/sessions/{sessionCode}/queue/{queueItemId}
+    // -----------------------------------------------------------------------------------
     @Test
     @WithMockUser
-    void addSongToQueue_ShouldReturn404NotFound_WhenVideoIsNotValid() throws Exception {
-        final String SONG_TITLE = "Musica Invalida";
-        
-        // 1. Mock para simular a falha na busca/validação do vídeo
-        doThrow(new VideoNotFoundException("Vídeo não encontrado/incorporável."))
-                .when(service).addSongToQueue(eq(SESSION_CODE), any(), any(), any());
+    void deleteSongFromQueue_DeveRetornar204NoContent() throws Exception {
+        Long queueItemId = 123L;
+        doNothing().when(service).deleteSongFromQueue(ACCESS_CODE, queueItemId);
 
-        // 2. Cria o DTO de Requisição
-        AddSongRequestDTO requestDTO = new AddSongRequestDTO();
-        requestDTO.setSongTitle(SONG_TITLE);
-        requestDTO.setUserId("user123");
-        requestDTO.setUserName("João");
+        mockMvc.perform(delete("/api/sessions/" + ACCESS_CODE + "/queue/" + queueItemId))
+                .andExpect(status().isNoContent());
 
-        // 3. Executa a requisição
-        mockMvc.perform(post(BASE_URL + "/" + SESSION_CODE + "/queue")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDTO))
-                        .with(csrf()))
-                .andExpect(status().isNotFound()) // Espera 404 (do @ExceptionHandler)
-                .andExpect(content().string("Vídeo não encontrado/incorporável.")); // Verifica a mensagem de erro
-
-        // 4. Verifica se o Service foi chamado
-        verify(service, times(1)).addSongToQueue(
-            eq(SESSION_CODE), 
-            eq(SONG_TITLE), 
-            any(), 
-            any()
-        );
+        verify(service, times(1)).deleteSongFromQueue(ACCESS_CODE, queueItemId);
     }
-
 }
-

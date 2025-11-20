@@ -5,5 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SongRepository extends JpaRepository<Song, String> { // O ID da Song é String (UUID)
+public interface SongRepository extends JpaRepository<Song, Long> { // O ID da Song é String (UUID)
+
+	java.util.Optional<com.karaoke.backend.models.Song> findByYoutubeVideoId(String youtubeVideoId);
 }

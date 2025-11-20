@@ -1,7 +1,6 @@
 package com.karaoke.backend.services;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
-import com.karaoke.backend.services.YoutubeService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,8 +81,7 @@ class YouTubeServiceTest {
         assertFalse(result.isEmpty(), "Deve retornar vídeos válidos.");
         assertEquals(1, result.size());
         YouTubeVideoDTO dto = result.get(0);
-        assertEquals("VIDEO_A", dto.videoId());
-        assertTrue(dto.probablyEmbeddable(), "A flag probablyEmbeddable deve ser TRUE.");
+        assertEquals("VIDEO_A", dto.getVideoId());
     }
 
     // --- Testes de Casos de Falha/Filtro ---

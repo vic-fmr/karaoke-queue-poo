@@ -2,13 +2,12 @@ package com.karaoke.backend.services;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
+import com.karaoke.backend.exception.SessionNotFoundException;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.Song;
@@ -16,30 +15,20 @@ import com.karaoke.backend.models.User;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
 import com.karaoke.backend.repositories.QueueItemRepository;
 import com.karaoke.backend.repositories.SongRepository;
-import com.karaoke.backend.repositories.UserRepository;
-import com.karaoke.backend.services.exception.SessionNotFoundException;
-import com.karaoke.backend.services.exception.VideoNotFoundException;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 @Service
 public class KaraokeService {
 
-    @Autowired
-    private KaraokeSessionRepository sessionRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private SongRepository songRepository;
-
-    @Autowired
-    private FilaService filaService;
-
-    @Autowired
-    private QueueItemRepository queueItemRepository;
-
-    @Autowired
-    private YoutubeService youTubeService;
+    private final KaraokeSessionRepository sessionRepository;
+    private final FilaService filaService;
+    private final QueueItemRepository queueItemRepository;
+    private final YoutubeService youTubeService;
+    private final SongService songService;
+    private final SongRepository songRepository;
+    private final com.karaoke.backend.repositories.UserRepository userRepository;
 
     @Transactional
     public KaraokeSession createSession() {
@@ -50,10 +39,13 @@ public class KaraokeService {
         return savedSession;
     }
 
+    // KaraokeService.java
     @Transactional
     public List<KaraokeSession> getAllSessions() {
         return sessionRepository.findAll();
     }
+
+// Certifique-se de que o QueueItemDTO também não expõe dados sensíveis do User.
 
     @Transactional(readOnly = true)
     public KaraokeSession getSession(String accessCode) {
@@ -69,100 +61,100 @@ public class KaraokeService {
         System.out.println("LOG: Sessão finalizada: " + accessCode);
     }
 
-    @Transactional
-    public void addSongToQueue(String accessCode, String songTitle, String userId, String userName) {
-        KaraokeSession session = getSession(accessCode);
+@Transactional
+// Mudança na assinatura: agora recebe um YouTubeVideoDTO (o vídeo escolhido)
+public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, User user) {
+    KaraokeSession session = getSession(accessCode);
 
-        // --- LÓGICA DE INTEGRAÇÃO COM YOUTUBE (PASSO NOVO) ---
+    // --- 1. LÓGICA DE YOUTUBE (REMOVIDA A BUSCA) ---
+    // A busca foi removida daqui. Confiamos que o Controller
+    // nos passou o vídeo que o usuário selecionou.
+    
+    // Opcional: Se você quiser validar se o vídeo ainda existe ou pegar 
+    // a duração exata, poderia chamar o youtubeService.getVideoDetails(id),
+    // mas para performance, geralmente usamos o que o front mandou.
 
-        String searchQuery = songTitle + " karaoke";
-        List<YouTubeVideoDTO> validVideos = youTubeService.searchVideos(searchQuery);
-
-        if (validVideos.isEmpty()) {
-            if (validVideos.isEmpty()) {
-                throw new VideoNotFoundException(
-                        "Não foi encontrado um vídeo válido e incorporável do YouTube para a música: " + songTitle);
-            }
-        }
-
-        // Pega o primeiro resultado (o melhor e já validado)
-        YouTubeVideoDTO bestVideo = validVideos.get(0);
-
-        // --- LÓGICA DE USUÁRIO E PERSISTÊNCIA (EXISTENTE) ---
-
-        // 2. Converte o userId (String) para Long ANTES de buscar
-        Long userIdAsLong;
+    // --- 2. LÓGICA DE USUÁRIO ---
+    // Se o controlador não nos forneceu o User (por exemplo em testes com @WithMockUser),
+    // tentamos recuperar o nome do usuário a partir do SecurityContext e criar/recuperar
+    // o usuário na base de dados.
+    if (user == null) {
         try {
-            userIdAsLong = Long.parseLong(userId);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID do usuário inválido: " + userId);
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !(auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
+                String username = auth.getName();
+                if (username != null) {
+                    final String uname = username;
+                    user = userRepository.findByUsername(uname).orElseGet(() -> {
+                        com.karaoke.backend.models.User nu = new com.karaoke.backend.models.User();
+                        nu.setUsername(uname);
+                        com.karaoke.backend.models.User saved = userRepository.save(nu);
+                        System.out.println("LOG: Created user from principal: " + uname + " (id=" + saved.getId() + ")");
+                        return saved;
+                    });
+                }
+            }
+        } catch (Exception ignored) {
         }
+    }
 
-        // 3. Busca/Cria o usuário
-        User user = userRepository.findById(userIdAsLong).orElseGet(() -> {
-            User newUser = new User();
-            newUser.setUsername(userName);
-            newUser.setSession(session);
-            return userRepository.save(newUser);
-        });
-
-        // 4. Cria a Entidade Song com os dados OBTIDOS DO YOUTUBE
-        Song song = new Song(
-                UUID.randomUUID().toString(), // 1. songId (novo ID interno)
-                bestVideo.videoId(), // 2. youtubeVideoId (ID do YouTube)
-                bestVideo.title(), // 3. title (Título do YouTube)
-                "Artista Desconhecido" // 4. artist (Placeholder, pois a busca não retorna)
-        );
-
-        // **!!! IMPORTANTE: Você precisa que o campo youtubeVideoId exista na sua
-        // Entidade Song !!!**
-        song.setYoutubeVideoId(bestVideo.videoId()); // Adiciona o ID do vídeo para persistência
-
-        songRepository.save(song);
-
-        // 5. Adiciona à Fila
-        QueueItem queueItem = new QueueItem(UUID.randomUUID().toString(), user, song);
-        session.addQueueItem(queueItem);
-
-        // Atualiza ordem de rotação: se o usuário ainda não estiver presente, insere-o
-        // imediatamente após o usuário apontado por nextUserIndex, para que o novato
-        // entre na rotação logo após a posição atual.
-        String uid = user.getId() != null ? user.getId().toString() : "";
-        List<String> rotation = session.getRotationUserIds();
-        if (rotation == null) rotation = new java.util.ArrayList<>();
-
-        if (rotation.isEmpty()) {
-            rotation.add(uid);
-            session.setNextUserIndex(0);
-        } else if (!rotation.contains(uid)) {
-            int insertPos = session.getNextUserIndex() + 1;
-            if (insertPos < 0) insertPos = 0;
-            if (insertPos > rotation.size()) insertPos = rotation.size();
-            rotation.add(insertPos, uid);
+    if (user != null) {
+        if (user.getSession() == null || !user.getSession().getId().equals(session.getId())) {
+            session.addUser(user);
         }
+    }
 
-        session.setRotationUserIds(rotation);
+    // --- 3. LÓGICA DE MÚSICA ---
+    // Reaproveita seu método existente, passando o vídeo recebido
+    System.out.println("LOG: songCountBefore=" + songRepository.count());
+    Song song = songService.createSongFromVideo(selectedVideo);
 
-        sessionRepository.save(session);
+    // --- 4. ADICIONA À FILA ---
+    QueueItem queueItem = new QueueItem(session, user, song);
+    session.addQueueItem(queueItem);
 
-        System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
+    // Atualiza ordem de rotação: se o usuário ainda não estiver presente, insere-o
+    // imediatamente após o usuário apontado por nextUserIndex, para que o novato
+    // entre na rotação logo após a posição atual.
+    String uid = user.getId() != null ? user.getId().toString() : "";
+    List<String> rotation = session.getRotationUserIds();
+    if (rotation == null) rotation = new java.util.ArrayList<>();
 
-        // 6. Notifica o Front-end
-        filaService.notificarAtualizacaoFila(accessCode);
+    if (rotation.isEmpty()) {
+        rotation.add(uid);
+        session.setNextUserIndex(0);
+    } else if (!rotation.contains(uid)) {
+        int insertPos = session.getNextUserIndex() + 1;
+        if (insertPos < 0) insertPos = 0;
+        if (insertPos > rotation.size()) insertPos = rotation.size();
+        rotation.add(insertPos, uid);
+    }
+
+    session.setRotationUserIds(rotation);
+
+    sessionRepository.save(session);
+
+    System.out.println("LOG: songCountAfter=" + songRepository.count());
+
+    System.out.println("LOG: Música adicionada à fila da sessão " + accessCode);
+
+    // --- 5. NOTIFICAÇÃO ---
+    filaService.notificarAtualizacaoFila(accessCode);
+    System.out.println("LOG: songCountAfterNotification=" + songRepository.count());
     }
 
     @Transactional
-    public void deleteSongFromQueue(String accessCode, String queueItemId) {
-        // 1. Buscamos o item da fila para garantir que ele exista.
-        Optional<QueueItem> itemOpt = queueItemRepository.findById(queueItemId);
+    public void deleteSongFromQueue(String accessCode, Long queueItemId) {
         KaraokeSession session = getSession(accessCode);
+        Optional<QueueItem> itemOpt = queueItemRepository.findById(queueItemId);
 
         if (itemOpt.isPresent()) {
             QueueItem itemToDelete = itemOpt.get();
-            // Se o item a ser deletado for o que está atualmente como nowPlaying na fila
-            // justa, avançamos o ponteiro de rotação para o próximo usuário.
+
+            // Se o item a ser deletado for o que está atualmente como nowPlaying na fila justa,
+            // avançamos o ponteiro de rotação para o próximo usuário.
             List<com.karaoke.backend.models.QueueItem> fairOrder = filaService.computeFairOrder(session);
-            String nowPlayingId = fairOrder.isEmpty() ? null : fairOrder.get(0).getQueueItemId();
+            Long nowPlayingId = fairOrder.isEmpty() ? null : fairOrder.get(0).getQueueItemId();
             if (nowPlayingId != null && nowPlayingId.equals(queueItemId)) {
                 // Avança nextUserIndex para o usuário seguinte na rotação
                 String userIdStr = itemToDelete.getUser() != null && itemToDelete.getUser().getId() != null
@@ -178,21 +170,37 @@ public class KaraokeService {
                 }
                 sessionRepository.save(session);
             }
-            // A sessão não precisa ser buscada explicitamente se a QueueItem não for
-            // bidirecionalmente mapeada com a sessão.
-            // Deletamos o QueueItem diretamente.
 
             session.deleteQueueItem(itemToDelete);
-
-            // 2. Deleta o QueueItem pela entidade
-            queueItemRepository.delete(itemToDelete);
-
             System.out.println("LOG: Item de fila (" + queueItemId + ") removido da sessão " + accessCode);
         } else {
             System.out.println("ALERTA: Tentativa de remover item de fila não existente com ID: " + queueItemId);
         }
 
-        // 3. Notifica todos os clientes via WebSocket
+        // Notifica todos os clientes via WebSocket
         filaService.notificarAtualizacaoFila(accessCode);
+    }
+
+    // Overload que aceita Principal (usado pelos controllers para encaminhar a identificação do usuário
+    // sem ler diretamente o SecurityContext, o que evita efeitos colaterais entre testes).
+    @Transactional
+    public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, java.security.Principal principal) {
+        com.karaoke.backend.models.User user = null;
+        if (principal != null) {
+            String username = principal.getName();
+            if (username != null) {
+                final String uname = username;
+                user = userRepository.findByUsername(uname).orElseGet(() -> {
+                    com.karaoke.backend.models.User nu = new com.karaoke.backend.models.User();
+                    nu.setUsername(uname);
+                    com.karaoke.backend.models.User saved = userRepository.save(nu);
+                    System.out.println("LOG: Created user from principal: " + uname + " (id=" + saved.getId() + ")");
+                    return saved;
+                });
+            }
+        }
+
+        // Delega para a implementação existente
+        addSongToQueue(accessCode, selectedVideo, user);
     }
 }

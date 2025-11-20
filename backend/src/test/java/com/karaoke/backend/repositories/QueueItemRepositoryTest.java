@@ -1,9 +1,11 @@
 package com.karaoke.backend.repositories;
 
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Optional;
+
+import com.karaoke.backend.models.KaraokeSession;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -22,94 +24,94 @@ class QueueItemRepositoryTest {
     @Autowired
     private QueueItemRepository repository;
 
-    @Test
-    void save_ShouldPersistQueueItem() {
-        User user = new User();
-        user.setUsername("Test User");
-        entityManager.persist(user); 
+    private KaraokeSession testSession;
 
-        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
-        Song song = new Song(
-            UUID.randomUUID().toString(), 
-            "TESTE_YOUTUBE_ID_1", 
-            "Test Song", 
-            "Test Artist"
-        );
-        entityManager.persist(song); 
-        entityManager.flush(); 
-
-        String queueItemId = UUID.randomUUID().toString();
-        QueueItem newItem = new QueueItem(queueItemId, user, song);
-
-        QueueItem savedItem = repository.save(newItem);
-
-        assertThat(savedItem).isNotNull();
-        assertThat(savedItem.getQueueItemId()).isEqualTo(queueItemId);
-        assertThat(savedItem.getUser()).isEqualTo(user);
-        assertThat(savedItem.getSong()).isEqualTo(song);
-        assertThat(savedItem.getTimestampAdded()).isNotNull();
-
-        Optional<QueueItem> foundById = repository.findById(queueItemId);
-        assertThat(foundById).isPresent();
-        assertThat(foundById.get().getQueueItemId()).isEqualTo(queueItemId); 
-        assertThat(foundById.get().getUser().getUsername()).isEqualTo("Test User");
-        assertThat(foundById.get().getSong().getTitle()).isEqualTo("Test Song");
+    @BeforeEach
+    public void setup() {
+        testSession = new KaraokeSession();
+        entityManager.persist(testSession);
+        entityManager.flush();
     }
 
-     @Test
-    void findById_ShouldReturnQueueItem_WhenExists() {
-        // CORRIGIDO: User deve ter os argumentos do construtor completo (assumindo songId, username)
-        // Se user não tiver um construtor com argumentos, use setters.
-        // Assumindo um construtor (String username):
-        User user = new User();
-        user.setUsername("Another User"); 
-        entityManager.persist(user);
-        
-        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
-        Song song = new Song(
-            UUID.randomUUID().toString(), 
-            "TESTE_YOUTUBE_ID_2",
-            "Another Song", 
-            "Another Artist"
-        );
-        entityManager.persist(song);
-        entityManager.flush();
+    // --- UTILS PARA GARANTIR OS OBJETOS CORRETOS ---
 
-        String queueItemId = UUID.randomUUID().toString();
-        QueueItem item = new QueueItem(queueItemId, user, song);
+    private User createTestUser(String username) {
+        User user = new User();
+        user.setUsername(username);
+        return entityManager.persist(user);
+    }
+
+    // O construtor Song (String youtubeVideoId, String title, String artist, String url)
+    private Song createTestSong(String title) {
+        Song song = new Song("YT_ID_" + title, title, "Artist Name", "http://url.test");
+        return entityManager.persist(song);
+    }
+    // --- FIM UTILS ---
+
+
+    @Test
+    void save_ShouldPersistQueueItem() {
+        // 1. Arrange (Preparação)
+        User user = createTestUser("Save User");
+        Song song = createTestSong("Test Song 1");
+
+        // 2. Act (Ação)
+        // Construtor: new QueueItem(KaraokeSession session, User user, Song song)
+        QueueItem newItem = new QueueItem(testSession, user, song);
+        QueueItem savedItem = repository.save(newItem); // ID gerado aqui
+
+        // 3. Assert (Verificação)
+        assertThat(savedItem).isNotNull();
+        // O ID é gerado pelo DB, não podemos compará-lo com o ID da sessão
+        assertThat(savedItem.getQueueItemId()).isNotNull();
+        assertThat(savedItem.getUser().getUsername()).isEqualTo("Save User");
+        assertThat(savedItem.getSong().getTitle()).isEqualTo("Test Song 1");
+        assertThat(savedItem.getTimestampAdded()).isNotNull();
+
+        // 4. Verificação final pelo ID gerado
+        Optional<QueueItem> foundById = repository.findById(savedItem.getQueueItemId());
+        assertThat(foundById).isPresent();
+        assertThat(foundById.get().getQueueItemId()).isEqualTo(savedItem.getQueueItemId());
+    }
+
+    @Test
+    void findById_ShouldReturnQueueItem_WhenExists() {
+        // 1. Arrange (Preparação)
+        User user = createTestUser("Find User");
+        Song song = createTestSong("Test Song 2");
+
+        QueueItem item = new QueueItem(testSession, user, song);
+        // PersistAndFlush para garantir que o ID (Long) seja gerado
         entityManager.persistAndFlush(item);
 
-        Optional<QueueItem> foundItem = repository.findById(queueItemId);
+        Long generatedId = item.getQueueItemId();
 
+        // 2. Act (Ação)
+        Optional<QueueItem> foundItem = repository.findById(generatedId);
+
+        // 3. Assert (Verificação)
         assertThat(foundItem).isPresent();
-        assertThat(foundItem.get().getQueueItemId()).isEqualTo(queueItemId); 
+        assertThat(foundItem.get().getQueueItemId()).isEqualTo(generatedId);
+        assertThat(foundItem.get().getUser().getUsername()).isEqualTo("Find User");
     }
 
     @Test
     void delete_ShouldRemoveQueueItem() {
-        // CORRIGIDO: User deve ter os argumentos do construtor completo (assumindo songId, username)
-        User user = new User();
-        user.setUsername("Delete User");
-        entityManager.persist(user);
-        
-        // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
-        Song song = new Song(
-            UUID.randomUUID().toString(), 
-            "TESTE_YOUTUBE_ID_3",
-            "Delete Song", 
-            "Delete Artist"
-        );
-        entityManager.persist(song);
-        entityManager.flush();
+        // 1. Arrange (Preparação)
+        User user = createTestUser("Delete User");
+        Song song = createTestSong("Test Song 3");
 
-        String queueItemId = UUID.randomUUID().toString();
-        QueueItem item = new QueueItem(queueItemId, user, song);
+        QueueItem item = new QueueItem(testSession, user, song);
         entityManager.persistAndFlush(item);
 
-        repository.deleteById(queueItemId);
-        entityManager.flush();
+        Long itemIdToDelete = item.getQueueItemId();
 
-        Optional<QueueItem> foundItem = repository.findById(queueItemId);
+        // 2. Act (Ação)
+        repository.deleteById(itemIdToDelete);
+        entityManager.flush(); // Garante que a operação DELETE foi executada no banco
+
+        // 3. Assert (Verificação)
+        Optional<QueueItem> foundItem = repository.findById(itemIdToDelete);
         assertThat(foundItem).isNotPresent();
     }
 }

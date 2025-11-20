@@ -1,15 +1,9 @@
 package com.karaoke.backend.dtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor; 
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor 
-public class AddSongRequestDTO {
-    private String songTitle; 
-    
-    private String userId;
-    private String userName;
-}
+public record AddSongRequestDTO(
+    String videoId,      // ID do Youtube (ex: dQw4w9WgXcQ)
+    String title,        // Título do vídeo
+    String thumbnailUrl  // URL da capa
+    // userId e userName você pode manter se ainda usar, 
+    // mas vi que você pega o user via @AuthenticationPrincipal
+) {}

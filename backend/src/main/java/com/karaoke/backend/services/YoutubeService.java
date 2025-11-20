@@ -14,6 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 
+
 @Service
 public class YoutubeService {
 
@@ -37,7 +38,8 @@ public class YoutubeService {
             String[] active = env.getActiveProfiles();
             for (String p : active) {
                 if ("test".equals(p)) {
-                    YouTubeVideoDTO dto = new YouTubeVideoDTO("youtube-test-id", query, true);
+                    // Return a deterministic DTO shape matching constructors
+                    YouTubeVideoDTO dto = new YouTubeVideoDTO("youtube-test-id", query, "", true);
                     return java.util.List.of(dto);
                 }
             }
@@ -51,75 +53,68 @@ public class YoutubeService {
             return new ArrayList<>();
         }
 
-        List<String> videoIds = searchResults.stream()
-                .map(item -> (String) ((Map<String, Object>) item.get("id")).get("videoId"))
-                .collect(Collectors.toList());
+        // Extrai com segurança os IDs dos vídeos retornados pela busca
+        List<String> videoIds = new ArrayList<>();
+        for (Map<String, Object> item : searchResults) {
+            Object idObj = item.get("id");
+            if (idObj instanceof Map) {
+                Object vid = ((Map<?, ?>) idObj).get("videoId");
+                if (vid instanceof String) videoIds.add((String) vid);
+            }
+        }
 
         Map<String, Boolean> validationMap = checkDetailedRestrictions(videoIds);
 
         List<YouTubeVideoDTO> finalValidList = new ArrayList<>();
 
         for (Map<String, Object> item : searchResults) {
-            String videoId = (String) ((Map<String, Object>) item.get("id")).get("videoId");
-            String title = (String) ((Map<String, Object>) item.get("snippet")).get("title");
+            // safe extraction of nested fields to avoid NPE in unit tests that provide minimal maps
+            String videoId = null;
+            Object idObj = item.get("id");
+            if (idObj instanceof Map) {
+                Object vid = ((Map<?, ?>) idObj).get("videoId");
+                if (vid instanceof String) videoId = (String) vid;
+            }
+
+            Map<String, Object> snippet = item.get("snippet") instanceof Map ? (Map<String, Object>) item.get("snippet") : null;
+            String title = snippet != null && snippet.get("title") instanceof String ? (String) snippet.get("title") : "";
+
+            String thumbnaillUrl = "";
+            if (snippet != null) {
+                Object thumbs = snippet.get("thumbnails");
+                if (thumbs instanceof Map) {
+                    Object def = ((Map<?, ?>) thumbs).get("default");
+                    if (def instanceof Map) {
+                        Object url = ((Map<?, ?>) def).get("url");
+                        if (url instanceof String) thumbnaillUrl = (String) url;
+                    }
+                }
+            }
+
+            if (videoId == null) continue;
 
             boolean isValid = validationMap.getOrDefault(videoId, false);
 
             if (isValid) {
-                YouTubeVideoDTO dto = new YouTubeVideoDTO(videoId, title, true);
+                YouTubeVideoDTO dto = new YouTubeVideoDTO(videoId, title, thumbnaillUrl, true);
                 finalValidList.add(dto);
             }
         }
-        
-        return finalValidList; 
-    }
 
-    // Allow injection of RestTemplate for tests
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    private List<Map<String, Object>> callSearchList(String query) {
-        
-        java.net.URI searchUri = UriComponentsBuilder.fromHttpUrl(YOUTUBE_API_URL + "search")
-            .queryParam("key", apiKey)
-            .queryParam("part", "snippet")
-            .queryParam("q", query)
-            .queryParam("type", "video")
-            .queryParam("maxResults", 10)
-            .queryParam("videoEmbeddable", true)
-            .build()             .toUri();
-
-        try {
-            if (restTemplate == null) {
-                restTemplate = new RestTemplate();
-            }
-            // Use String URL so existing unit test mocks that expect String arguments (anyString()) match
-            Map<String, Object> response = restTemplate.getForObject(searchUri.toString(), Map.class);
-            if (response == null || !response.containsKey("items")) {
-                return new ArrayList<>();
-            }
-            Object itemsObj = response.get("items");
-            if (!(itemsObj instanceof List)) return new ArrayList<>();
-            return (List<Map<String, Object>>) itemsObj;
-        } catch (Exception e) {
-            // Log and return empty list to keep service resilient in tests/envs without network
-            System.err.println("Falha ao se comunicar com a API do YouTube: " + e.getMessage());
-            return new ArrayList<>();
-        }
+        return finalValidList;
     }
 
     private Map<String, Boolean> checkDetailedRestrictions(List<String> videoIds) {
         String idsString = String.join(",", videoIds);
-        
+
         String detailsUrl = UriComponentsBuilder.fromHttpUrl(YOUTUBE_API_URL + "videos")
-            .queryParam("key", apiKey)
-            .queryParam("part", "status,contentDetails")
-            .queryParam("id", idsString)
-            .toUriString();
-        
+                .queryParam("key", apiKey)
+                .queryParam("part", "status,contentDetails")
+                .queryParam("id", idsString)
+                .toUriString();
+
         Map<String, Object> validationMap = new java.util.HashMap<>();
-        
+
         try {
             if (restTemplate == null) {
                 restTemplate = new RestTemplate();
@@ -134,7 +129,7 @@ public class YoutubeService {
 
             for (Map<String, Object> detailedItem : detailedItems) {
                 String videoId = (String) detailedItem.get("id");
-                
+
                 // 1. Checagem de Permissão Geral
                 Map<String, Object> status = (Map<String, Object>) detailedItem.get("status");
                 boolean isEmbeddable = (Boolean) status.get("embeddable");
@@ -142,10 +137,10 @@ public class YoutubeService {
                 // 2. Checagem de Restrição Geográfica
                 boolean isRegionBlocked = false;
                 Map<String, Object> contentDetails = (Map<String, Object>) detailedItem.get("contentDetails");
-                
+
                 if (contentDetails.containsKey("regionRestriction")) {
                     Map<String, Object> regionRestriction = (Map<String, Object>) contentDetails.get("regionRestriction");
-                    
+
                     if (regionRestriction.containsKey("blocked")) {
                         List<String> blockedRegions = (List<String>) regionRestriction.get("blocked");
                         if (blockedRegions.contains(USER_REGION_CODE)) {
@@ -153,7 +148,7 @@ public class YoutubeService {
                         }
                     }
                 }
-                
+
                 validationMap.put(videoId, isEmbeddable && !isRegionBlocked);
             }
         } catch (Exception e) {
@@ -161,5 +156,39 @@ public class YoutubeService {
         }
 
         return (Map<String, Boolean>) (Map) validationMap;
+    }
+
+
+    // Allow injection of RestTemplate for tests
+    public void setRestTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    private List<Map<String, Object>> callSearchList(String query) {
+        String searchUri = UriComponentsBuilder.fromHttpUrl(YOUTUBE_API_URL + "search")
+                .queryParam("key", apiKey)
+                .queryParam("part", "snippet")
+                .queryParam("q", query)
+                .queryParam("type", "video")
+                .queryParam("maxResults", 10)
+                .queryParam("videoEmbeddable", true)
+                .build()
+                .toUriString();
+
+        try {
+            if (restTemplate == null) {
+                restTemplate = new RestTemplate();
+            }
+            Map<String, Object> response = restTemplate.getForObject(searchUri, Map.class);
+            if (response == null || !response.containsKey("items")) {
+                return new ArrayList<>();
+            }
+            Object itemsObj = response.get("items");
+            if (!(itemsObj instanceof List)) return new ArrayList<>();
+            return (List<Map<String, Object>>) itemsObj;
+        } catch (Exception e) {
+            System.err.println("Falha ao se comunicar com a API do YouTube: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 }

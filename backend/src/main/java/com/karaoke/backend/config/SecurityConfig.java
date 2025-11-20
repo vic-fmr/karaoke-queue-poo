@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,42 +25,29 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity // Ajuste conforme a origem do seu frontend
 public class SecurityConfig {
-
-    // JwtAuthFilter is optional in test slices; make injection optional to avoid
-    // ApplicationContext failures in WebMvcTest where the full filter chain isn't present.
+    // JwtAuthFilter may cause circular init when eagerly resolved (it depends on UserDetailsService).
+    // Use ObjectProvider to lazily obtain the filter if present to avoid circular dependency during context startup.
     @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private JwtAuthFilter jwtAuthFilter;
-
+    private org.springframework.beans.factory.ObjectProvider<JwtAuthFilter> jwtAuthFilterProvider;
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        String localHost = "http://localhost:4200";
-        String codespaceHost = "https://neglected-werewolf-x59r4p4wr56w3v9gq-4200.app.github.dev"; // Substitua pelo host real do Codespace
-
-        // Origem do seu frontend
-        configuration.setAllowedOrigins(List.of(localHost, codespaceHost));
-
-        // Métodos obrigatórios, incluindo OPTIONS (para o preflight)
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Cabeçalhos que seu frontend pode enviar (ex: Authorization, Content-Type)
         configuration.setAllowedHeaders(List.of("*"));
-
-        // Se você envia cookies ou tokens de sessão/JWT no header
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setMaxAge(3600L); // Cache preflight por 1 hora
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplica esta configuração a TODOS os caminhos (/**)
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -67,16 +55,18 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT é STATELESS
-        .authorizeHttpRequests(authorize -> authorize
-            // Permite acesso público ao cadastro e login
-            .requestMatchers("/auth/**").permitAll()
-            // Todas as outras rotas exigem autenticação
-            .anyRequest().authenticated()
-        );
+                .authorizeHttpRequests(authorize -> authorize
+                        // Permite acesso público ao cadastro e login
+                        .requestMatchers("/auth/**").permitAll()
+                        // Todas as outras rotas exigem autenticação
+                        .anyRequest().authenticated()
+                );
 
-    if (jwtAuthFilter != null) {
-        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-    }
+        // Se o filtro JWT estiver disponível, obtenha-o de forma lazy e adicione ao filtro
+        JwtAuthFilter jwtAuthFilter = jwtAuthFilterProvider != null ? jwtAuthFilterProvider.getIfAvailable() : null;
+        if (jwtAuthFilter != null) {
+            http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         return http.build();
     }

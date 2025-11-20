@@ -22,13 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
-    private final TokenService tokenService; // Novo
+    private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterRequestDTO request) {
-        User user = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequestDTO request) {
+        authService.register(request);
+
+        var usernamePassword = new UsernamePasswordAuthenticationToken(request.email(), request.password());
+        var auth = authenticationManager.authenticate(usernamePassword);
+        var token = tokenService.generateToken((User) auth.getPrincipal());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponseDTO(token));
     }
 
     @PostMapping("/login")

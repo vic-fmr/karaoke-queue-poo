@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.karaoke.backend.dtos.FilaUpdateDTO;
 import com.karaoke.backend.dtos.QueueItemDTO;
 import com.karaoke.backend.models.KaraokeSession;
+import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
 
 import java.util.List;
@@ -24,23 +25,23 @@ public class FilaService {
     @Autowired
     private SimpMessagingTemplate template;
     @Autowired
-    private KaraokeSessionRepository sessionRepository;
-
+    private KaraokeSessionRepository sessionRepository; // Assumindo um Repository para obter a Sessão
+    
+    // Metodo que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
     public void notificarAtualizacaoFila(String accessCode) {
-
-        // 1. Recupera a sessão do karaokê pelo accessCode
+        
+        // 1. Busque a sessão completa (com a lista de QueueItem já ordenada pelo @OrderBy no seu modelo)
         KaraokeSession session = sessionRepository.findByAccessCode(accessCode)
             .orElseThrow(() -> new RuntimeException("Sessão não encontrada."));
-        
-        // 2. Calcula a fila justa (interleaving por usuário) para envio ao front
-        List<com.karaoke.backend.models.QueueItem> fairOrdered = computeFairOrder(session);
+    // 2. Calcula a fila justa (interleaving por usuário) para envio ao front
+    List<com.karaoke.backend.models.QueueItem> fairOrdered = computeFairOrder(session);
 
-        // 3. Mapeia a lista justa para DTOs
-        List<QueueItemDTO> dtoList = fairOrdered.stream()
-            .map(QueueItemDTO::fromEntity)
-            .collect(Collectors.toList());
+    // 3. Mapeia a lista justa para DTOs
+    List<QueueItemDTO> dtoList = fairOrdered.stream()
+        .map(QueueItemDTO::fromEntity)
+        .collect(Collectors.toList());
 
-        // 4. Lógica de "nowPlaying": primeiro item da lista justa (ou null se vazia)
+    // 4. Lógica de "nowPlaying": primeiro item da lista justa (ou null se vazia)
         QueueItemDTO nowPlayingDTO = dtoList.isEmpty() ? null : dtoList.get(0);
 
         FilaUpdateDTO filaAtualizada = new FilaUpdateDTO(

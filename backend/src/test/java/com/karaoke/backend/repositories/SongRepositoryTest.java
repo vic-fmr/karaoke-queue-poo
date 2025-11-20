@@ -1,7 +1,8 @@
 package com.karaoke.backend.repositories;
 
 import java.util.Optional;
-import java.util.UUID;
+// UUID não é mais necessário
+// import java.util.UUID; 
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
@@ -22,62 +23,70 @@ class SongRepositoryTest {
 
     @Test
     void save_ShouldPersistSong() {
-        String songId = UUID.randomUUID().toString();
-        // CORRIGIDO: Adicionando youtubeVideoId como segundo argumento
+        // 1. ARRANGE: Criamos a música SEM ID (passamos null ou usamos o construtor sem ID)
+        // Usando o construtor: Song(youtubeVideoId, title, artist, url)
         Song newSong = new Song(
-            songId, 
-            "FAKE_ID_1", // youtubeVideoId
+            "FAKE_ID_1", 
             "Bohemian Rhapsody", 
-            "Queen"
+            "Queen",
+            "http://url-exemplo.com"
         );
 
+        // 2. ACT: Salvamos
         Song savedSong = repository.save(newSong);
 
-        assertThat(savedSong.getSongId()).isEqualTo(songId);
+        // 3. ASSERT: Verificamos se o ID foi gerado (não é nulo e é maior que 0)
+        assertThat(savedSong.getSongId()).isNotNull(); 
+        assertThat(savedSong.getSongId()).isGreaterThan(0L); // Garante que é um Long válido
+        
         assertThat(savedSong.getTitle()).isEqualTo("Bohemian Rhapsody");
         assertThat(savedSong.getArtist()).isEqualTo("Queen");
-        assertThat(savedSong.getYoutubeVideoId()).isEqualTo("FAKE_ID_1"); // Novo check
-
-        Optional<Song> foundById = repository.findById(songId);
-        assertThat(foundById).isPresent();
-        assertThat(foundById.get().getTitle()).isEqualTo("Bohemian Rhapsody");
+        assertThat(savedSong.getYoutubeVideoId()).isEqualTo("FAKE_ID_1");
     }
 
     @Test
     void findById_ShouldReturnSong_WhenExists() {
-        String songId = UUID.randomUUID().toString();
-        // CORRIGIDO: Adicionando youtubeVideoId como segundo argumento
+        // 1. ARRANGE
         Song song = new Song(
-            songId, 
-            "FAKE_ID_2", // youtubeVideoId
+            "FAKE_ID_2", 
             "Stairway to Heaven", 
-            "Led Zeppelin"
+            "Led Zeppelin",
+            "http://url-exemplo.com"
         );
-        entityManager.persistAndFlush(song);
+        
+        // Persistimos no banco para gerar o ID
+        Song persistedSong = entityManager.persistAndFlush(song);
+        Long generatedId = persistedSong.getSongId(); // Pegamos o ID que o banco criou
 
-        Optional<Song> foundSong = repository.findById(songId);
+        // 2. ACT
+        // Buscamos usando o ID gerado (Long)
+        Optional<Song> foundSong = repository.findById(generatedId);
 
+        // 3. ASSERT
         assertThat(foundSong).isPresent();
-        assertThat(foundSong.get().getSongId()).isEqualTo(songId);
+        assertThat(foundSong.get().getSongId()).isEqualTo(generatedId);
         assertThat(foundSong.get().getArtist()).isEqualTo("Led Zeppelin");
     }
 
     @Test
     void delete_ShouldRemoveSong() {
-        String songId = UUID.randomUUID().toString();
-        // CORRIGIDO: Adicionando youtubeVideoId como segundo argumento
+        // 1. ARRANGE
         Song song = new Song(
-            songId, 
-            "FAKE_ID_3", // youtubeVideoId
+            "FAKE_ID_3", 
             "Like a Rolling Stone", 
-            "Bob Dylan"
+            "Bob Dylan",
+            "http://url-exemplo.com"
         );
-        entityManager.persistAndFlush(song);
+        
+        Song persistedSong = entityManager.persistAndFlush(song);
+        Long generatedId = persistedSong.getSongId();
 
-        repository.deleteById(songId);
-        entityManager.flush();
+        // 2. ACT
+        repository.deleteById(generatedId); // Deletamos pelo ID Long
+        entityManager.flush(); // Garante a execução do delete
 
-        Optional<Song> foundSong = repository.findById(songId);
+        // 3. ASSERT
+        Optional<Song> foundSong = repository.findById(generatedId);
         assertThat(foundSong).isNotPresent();
     }
 }

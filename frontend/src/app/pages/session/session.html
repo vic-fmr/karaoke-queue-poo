@@ -1,5 +1,10 @@
-<div class="session-container">
+<div class="session-container" animate.enter="enter-animation" animate.leave="leave-animation">
   <header>
+    <button [routerLink]="['/home']">
+      <span class="material-symbols-outlined">
+        home
+      </span>
+    </button>
     <h2>Sessão: {{ sessionCode }}</h2>
   </header>
 
@@ -8,60 +13,104 @@
       <section class="now-playing">
         <h3>🎵 Tocando Agora</h3>
 
-        @if (current) {
-        <div class="current">
-          <div class="title">{{ current.titulo }}</div>
-          <div class="by">Adicionado por: {{ current.adicionadoPor }}</div>
-        </div>
+        @if (current()) {
+          <div class="current">
+            <div class="title">{{ current()?.songTitle }}</div>
+            <div class="by">Adicionado por: {{ current()?.addedByUserName }}</div>
+          </div>
         } @else {
-        <ng-template #noCurrent>
           <div class="none">Nenhuma música tocando.</div>
-        </ng-template>
         }
       </section>
 
       <section class="queue">
         <h4>Fila</h4>
-        <ol>
-          @for (song of queue; track song.id) {
-          <li>
-            <div class="song-item" [class.mine]="isAddedByMe(song)">
-              <div class="meta">
-                <div class="title">{{ song.titulo }}</div>
-                <div class="by">{{ song.adicionadoPor }}</div>
-              </div>
-              <div class="actions">
-                @if (isAddedByMe(song)) {
-                <button class="remove" (click)="removeSong(song.id)">🗑️</button>
-                }
-              </div>
-            </div>
-          </li>
-          }
-        </ol>
+        @if (queue().length === 0) {
+          <div class="waiting-container">
+            <img src="assets/waiting.png" alt="Icone de espera" class="waiting-icon"/>
+            <h5>Esperando alguem soltar o som...</h5>
+          </div>
+        } @else {
+          <ol>
+            @for (item of pendingQueue; track item.id) {
+              <li>
+                <div class="song-item" [class.mine]="isAddedByMe(item)">
+                  <div class="meta">
+                    <div class="title">{{ item.songTitle }}</div>
+                    <div class="by">{{ item.addedByUserName }}</div>
+                  </div>
+                  <div class="actions">
+                    @if (isAddedByMe(item)) {
+                      <button class="remove" (click)="removeSong(item.id)">🗑️</button>
+                    }
+                  </div>
+                </div>
+              </li>
+            }
+          </ol>
+        }
       </section>
     </div>
 
     <div class="content-sidebar">
       <section class="connected-users-container">
         <h4>Usuários Conectados</h4>
-        <ul>
-          @for (user of connectedUsers; track user.id) {
-          <li>{{ user.name }}</li>
-          }
-        </ul>
+        @if (connectedUsers().length !== 0) {
+          <ul>
+            @for (user of connectedUsers(); track user.name) {
+              <li>{{ user.name }}</li>
+            }
+          </ul>
+        } @else {
+          <div class="none">Nenhum usuário conectado.</div>
+        }
       </section>
 
       <section class="add-song">
         <h4>Adicionar à fila</h4>
 
         <div class="add-row">
-          <input type="text" [(ngModel)]="urlToAdd" placeholder="Nome da música" />
-          <button (click)="addSong()">+</button>
+          
+          <div class="add-input-container">
+            <input 
+              type="text" 
+              [(ngModel)]="urlToAdd" 
+              (keydown.enter)="search()" 
+              placeholder="Buscar música..."
+              [disabled]="isSearching() || isAddingSong"
+            />
+            <button (click)="search()" [disabled]="isSearching() || isAddingSong">
+              <span class="material-symbols-outlined">search</span>
+            </button>
+          </div>
         </div>
 
+         @if (isAddingSong || isSearching()) {
+            <div class="loading-overlay">
+              <p>{{ isSearching() ? 'Buscando...' : 'Adicionando...' }}</p>
+              <div class="loader"></div>
+            </div>
+          }
+
         @if (addError) {
-        <div class="error">{{ addError }}</div>
+          <div class="error">{{ addError }}</div>
+        }
+
+        @if (searchResults().length > 0) {
+          <div class="search-results-container">
+            <small>Toque para adicionar:</small>
+            <ul class="results-list">
+              @for (video of searchResults(); track video.videoId) {
+                <li (click)="addSelectedSong(video)" class="result-item">
+                  <img [src]="video.thumbnail" alt="thumb">
+                  <div class="result-info">
+                    <span class="result-title">{{ video.title }}</span>
+                  </div>
+                  <span class="material-symbols-outlined add-icon">add_circle</span>
+                </li>
+              }
+            </ul>
+          </div>
         }
       </section>
     </div>
