@@ -1,24 +1,27 @@
 {
-    "name": "KaraQ Dev Environment",
-    "image": "mcr.microsoft.com/devcontainers/java:21-bullseye",
-    "features": {
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "20"
-        }
+  "name": "KaraQ Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/java:21-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "containerEnv": {
+        "YOUTUBE_API_KEY": "AIzaSyAVAycqwz5UEDrE4cYNByMj4froM_LdBhU"
     },
-    "forwardPorts": [
-        8080,
-        4200
-    ],
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "vscjava.vscode-java-pack",
-                "angular.ng-template",
-                "esbenp.prettier-vscode",
-                "dbaeumer.vscode-eslint"
-            ]
-        }
-    },
-    "postCreateCommand": "npm install -g @angular/cli"
+  "forwardPorts": [
+    8080,
+    4200
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "angular.ng-template",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "postCreateCommand": "sudo apt update && sudo apt install maven -y && npm install -g @angular/cli"
 }

@@ -31,12 +31,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Permite requisições OPTIONS passarem sem validação JWT (CORS preflight)
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         var token = this.recoverToken(request);
 
         if (token != null) {
@@ -65,6 +59,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/auth/");
+        // ALTERAÇÃO: Adicionada verificação para o método OPTIONS
+        // O filtro não deve ser aplicado para requisições de autenticação OU para qualquer preflight de CORS.
+        return request.getRequestURI().startsWith("/auth/") || "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 }

@@ -77,14 +77,15 @@ export class Home {
     }
 
     this.ks.createSession().subscribe({
-      next: (session) => {
-        // navigate to the newly created session
+      next: (newSession) => {
+        console.log('Sessão criada com sucesso:', newSession);
         this.loading = false;
-        this.router.navigate(['/session', session.accessCode]);
+        // Redireciona para a tela da sessão usando o código gerado pelo backend
+        this.router.navigate(['/host', newSession.accessCode]);
       },
       error: (err) => {
         console.error('Erro ao criar sessão:', err);
-        this.error = 'Não foi possível criar a sessão.';
+        this.error = 'Erro ao criar nova sessão. Tente novamente.';
         this.loading = false;
       }
     });

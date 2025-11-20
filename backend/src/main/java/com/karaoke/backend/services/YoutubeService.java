@@ -3,7 +3,6 @@ package com.karaoke.backend.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +20,23 @@ public class YoutubeService {
     @Value("${youtube.api.key}")
     private String apiKey;
 
-    // RestTemplate is injectable to allow mocking in unit tests
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+    
     private static final String YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/";
-
     private static final String USER_REGION_CODE = "BR";
 
     @Autowired
     private Environment env;
+
+    // Injeta o RestTemplate via construtor
+    public YoutubeService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    // Allow injection of RestTemplate for tests (mantém para os testes)
+    public void setRestTemplate(RestTemplate restTemplate) {
+        // Este método é usado apenas em testes para injetar um mock
+    }
 
     public List<YouTubeVideoDTO> searchVideos(String query) {
 
@@ -116,9 +124,6 @@ public class YoutubeService {
         Map<String, Object> validationMap = new java.util.HashMap<>();
 
         try {
-            if (restTemplate == null) {
-                restTemplate = new RestTemplate();
-            }
             Map<String, Object> response = restTemplate.getForObject(detailsUrl, Map.class);
             if (response == null || !response.containsKey("items")) {
                 return (Map<String, Boolean>) (Map) validationMap;
@@ -159,11 +164,6 @@ public class YoutubeService {
     }
 
 
-    // Allow injection of RestTemplate for tests
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
     private List<Map<String, Object>> callSearchList(String query) {
         String searchUri = UriComponentsBuilder.fromHttpUrl(YOUTUBE_API_URL + "search")
                 .queryParam("key", apiKey)
@@ -176,9 +176,6 @@ public class YoutubeService {
                 .toUriString();
 
         try {
-            if (restTemplate == null) {
-                restTemplate = new RestTemplate();
-            }
             Map<String, Object> response = restTemplate.getForObject(searchUri, Map.class);
             if (response == null || !response.containsKey("items")) {
                 return new ArrayList<>();
