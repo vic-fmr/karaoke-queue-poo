@@ -47,8 +47,7 @@ public class KaraokeController {
         List<KaraokeSession> session = service.getAllSessions();
         return ResponseEntity.ok(session);
     }
-
->>>>>>> origin/main
+    
     @GetMapping("/{sessionCode}")
     public ResponseEntity<SessionResponseDTO> getSession(@PathVariable String sessionCode) {
         KaraokeSession session = service.getSession(sessionCode);
