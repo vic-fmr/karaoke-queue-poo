@@ -23,17 +23,14 @@ import com.karaoke.backend.services.KaraokeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-
 @RestController
 @RequestMapping("/api/sessions")
 @RequiredArgsConstructor
 public class KaraokeController {
 
     private final KaraokeService service;
-
-    @Autowired(required = false)
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private com.karaoke.backend.services.FilaService filaService;
-
     @PostMapping
     public ResponseEntity<KaraokeSession> createSession() {
         KaraokeSession newSession = service.createSession();
@@ -41,15 +38,15 @@ public class KaraokeController {
         return ResponseEntity.created(location).body(newSession);
     }
 
-
     @GetMapping
-    public ResponseEntity<List<KaraokeSession>> getAllSessions(){
+    public ResponseEntity<List<KaraokeSession>> getAllSessions() {
         List<KaraokeSession> session = service.getAllSessions();
         return ResponseEntity.ok(session);
     }
 
+>>>>>>> origin/main
     @GetMapping("/{sessionCode}")
-    public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode){
+    public ResponseEntity<KaraokeSession> getSession(@PathVariable String sessionCode) {
         KaraokeSession session = service.getSession(sessionCode);
         return ResponseEntity.ok(session);
     }
@@ -57,10 +54,10 @@ public class KaraokeController {
     // Endpoint temporário de debug: retorna a fila justa (fair queue) calculada pelo servidor.
     @GetMapping("/{sessionCode}/fairQueue")
     public ResponseEntity<com.karaoke.backend.dtos.FilaUpdateDTO> getFairQueue(@PathVariable String sessionCode) {
-    KaraokeSession session = service.getSession(sessionCode.toUpperCase());
-    java.util.List<com.karaoke.backend.models.QueueItem> fair = filaService == null
-        ? java.util.List.of()
-        : filaService.computeFairOrder(session);
+        KaraokeSession session = service.getSession(sessionCode.toUpperCase());
+        java.util.List<com.karaoke.backend.models.QueueItem> fair = filaService == null
+                ? java.util.List.of()
+                : filaService.computeFairOrder(session);
         java.util.List<com.karaoke.backend.dtos.QueueItemDTO> dtoList = fair.stream()
                 .map(com.karaoke.backend.dtos.QueueItemDTO::fromEntity)
                 .toList();
@@ -70,34 +67,41 @@ public class KaraokeController {
         return ResponseEntity.ok(dto);
     }
 
-@PostMapping("/{sessionCode}/queue")
-public ResponseEntity<Void> addSongToQueue(
-    @PathVariable String sessionCode, 
-    @RequestBody AddSongRequestDTO request,
-    java.security.Principal principal
-) {
-    YouTubeVideoDTO videoEscolhido = new YouTubeVideoDTO();
-    videoEscolhido.setVideoId(request.videoId());
-    videoEscolhido.setTitle(request.title());
-    videoEscolhido.setThumbnail(request.thumbnailUrl());
-    
-    service.addSongToQueue(
-        sessionCode,
-        videoEscolhido,
-        principal
-    );
-    
-    return ResponseEntity.status(HttpStatus.CREATED).build();
-}
+    @PostMapping("/{sessionCode}/queue")
+    public ResponseEntity<Void> addSongToQueue(
+            @PathVariable String sessionCode,
+            @RequestBody AddSongRequestDTO request,
+            java.security.Principal principal) {
+        YouTubeVideoDTO videoEscolhido = new YouTubeVideoDTO();
+        videoEscolhido.setVideoId(request.videoId());
+        videoEscolhido.setTitle(request.title());
+        videoEscolhido.setThumbnail(request.thumbnailUrl());
+
+        service.addSongToQueue(
+                sessionCode,
+                videoEscolhido,
+                principal);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/{sessionCode}/queue/next")
+    public ResponseEntity<Void> playNextSong(
+            @PathVariable String sessionCode) {
+
+        service.playNextSong(sessionCode);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 
     @DeleteMapping("/{sessionCode}")
-    public ResponseEntity<Void> endSession(@PathVariable String sessionCode){
+    public ResponseEntity<Void> endSession(@PathVariable String sessionCode) {
         service.endSession(sessionCode);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{sessionCode}/queue/{queueItemId}")
-    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable Long queueItemId){
+    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable Long queueItemId) {
         service.deleteSongFromQueue(sessionCode, queueItemId);
         return ResponseEntity.noContent().build();
     }

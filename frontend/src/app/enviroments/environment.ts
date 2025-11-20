@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://192.168.1.175:8080', // Substitua pelo SEU IP (use ipconfig)
+  // Default: localhost (change to your machine LAN IP to allow mobile devices to reach the backend)
+  apiUrl: 'http://localhost:8080',
 };

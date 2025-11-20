@@ -1,11 +1,11 @@
 package com.karaoke.backend.config;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,16 +19,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Configuration
-@EnableWebSecurity // Ajuste conforme a origem do seu frontend
+@EnableWebSecurity
 public class SecurityConfig {
-    // JwtAuthFilter may cause circular init when eagerly resolved (it depends on UserDetailsService).
-    // Use ObjectProvider to lazily obtain the filter if present to avoid circular dependency during context startup.
+
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.beans.factory.ObjectProvider<JwtAuthFilter> jwtAuthFilterProvider;
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -42,7 +39,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setMaxAge(3600L); // Cache preflight por 1 hora
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -54,15 +51,13 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT é STATELESS
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permite acesso público ao cadastro e login
                         .requestMatchers("/auth/**").permitAll()
-                        // Todas as outras rotas exigem autenticação
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
-        // Se o filtro JWT estiver disponível, obtenha-o de forma lazy e adicione ao filtro
         JwtAuthFilter jwtAuthFilter = jwtAuthFilterProvider != null ? jwtAuthFilterProvider.getIfAvailable() : null;
         if (jwtAuthFilter != null) {
             http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

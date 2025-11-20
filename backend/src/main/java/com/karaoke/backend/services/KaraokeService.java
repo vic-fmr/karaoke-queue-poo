@@ -180,7 +180,6 @@ public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, Use
         // Notifica todos os clientes via WebSocket
         filaService.notificarAtualizacaoFila(accessCode);
     }
-
     // Overload que aceita Principal (usado pelos controllers para encaminhar a identificação do usuário
     // sem ler diretamente o SecurityContext, o que evita efeitos colaterais entre testes).
     @Transactional
@@ -202,5 +201,29 @@ public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, Use
 
         // Delega para a implementação existente
         addSongToQueue(accessCode, selectedVideo, user);
+    }
+
+    @Transactional
+    public Optional<QueueItem> playNextSong(String accessCode) {
+        KaraokeSession session = getSession(accessCode);
+
+        // Compute fair order and remove the item that is playing (first of fair order)
+        List<QueueItem> fairOrder = filaService.computeFairOrder(session);
+        if (fairOrder.isEmpty()) {
+            System.out.println("LOG: Fila de sessão " + accessCode + " vazia. Nenhuma música para tocar.");
+            return Optional.empty();
+        }
+
+        QueueItem nextItem = fairOrder.get(0);
+
+        // Remove the queue item from the session (entity relationship handling)
+        session.deleteQueueItem(nextItem);
+        sessionRepository.save(session);
+
+        filaService.notificarAtualizacaoFila(accessCode);
+
+        System.out.println("LOG: Próxima música (" + nextItem.getSong().getTitle() + ") selecionada e removida da fila da sessão " + accessCode);
+
+        return Optional.of(nextItem);
     }
 }

@@ -1,0 +1,140 @@
+<div class="session-container">
+  <header>
+    <button [routerLink]="['/home']">
+      <span class="material-symbols-outlined">home</span>
+    </button>
+    <h2>Sessão: {{ sessionCode }}</h2>
+  </header>
+
+  <div class="content-container">
+    <div class="music-queue-container">
+      
+      <section class="now-playing">
+        <h3>
+          @if (current()) { 🎵 Tocando Agora } @else { 😴 Aguardando... }
+        </h3>
+
+        <div class="player-wrapper">
+          @if (current()) {
+            <div class="video-container">
+              <iframe 
+                [src]="current()!.youtubeLink | safeUrl" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+              </iframe>
+            </div>
+            
+            <div class="current-info">
+              <div class="title">{{ current()?.songTitle }}</div>
+              <div class="by">Pedido por: <strong>{{ current()?.addedByUserName }}</strong></div>
+            </div>
+          } @else {
+            <div class="none">
+              <p>Nenhuma música tocando no momento.</p>
+              <p>Adicione uma música ou clique em "Tocar Próxima" para começar!</p>
+            </div>
+          }
+        </div>
+
+        @if (isHost) {
+          <div class="host-controls">
+            <button 
+              class="play-next-btn" 
+              (click)="playNextSong()" 
+              [disabled]="queue().length === 0 && !current()"
+            >
+              <span class="material-symbols-outlined">skip_next</span>
+              {{ current() ? 'Pular / Próxima' : 'Iniciar Fila' }}
+            </button>
+          </div>
+        }
+      </section>
+
+      <section class="queue">
+        <h4>Fila de Espera ({{ pendingQueue.length }})</h4>
+        @if (queue().length === 0) {
+          <div class="waiting-container">
+            <img src="assets/waiting.png" alt="Icone de espera" class="waiting-icon"/>
+            <h5>Fila vazia. Seja o primeiro!</h5>
+          </div>
+        } @else {
+          <ol>
+            @for (item of pendingQueue; track item.id) {
+              <li>
+                <div class="song-item" [class.mine]="isAddedByMe(item)">
+                  <div class="meta">
+                    <div class="title">{{ item.songTitle }}</div>
+                    <div class="by">{{ item.addedByUserName }}</div>
+                  </div>
+                  <div class="actions">
+                    @if (isAddedByMe(item) || isHost) {
+                      <button class="remove" (click)="removeSong(item.id)">🗑️</button>
+                    }
+                  </div>
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    </div>
+
+    <div class="content-sidebar">
+      <section class="connected-users-container">
+        <h4>Usuários Conectados</h4>
+        <ul>
+          @for (user of connectedUsers(); track user.name) {
+            <li>{{ user.name }}</li>
+          }
+        </ul>
+      </section>
+      <section class="add-song">
+        <h4>Adicionar à fila</h4>
+        <div class="add-row">
+          <div class="add-input-container">
+            <input 
+              type="text" 
+              [(ngModel)]="urlToAdd" 
+              (keydown.enter)="search()" 
+              placeholder="Buscar música..."
+              [disabled]="isSearching() || isAddingSong"
+            />
+            <button (click)="search()" [disabled]="isSearching() || isAddingSong">
+              <span class="material-symbols-outlined">search</span>
+            </button>
+          </div>
+        </div>
+
+        @if (isAddingSong || isSearching()) {
+          <div class="loading-overlay">
+            <p>{{ isSearching() ? 'Buscando...' : 'Adicionando...' }}</p>
+            <div class="loader"></div>
+          </div>
+        }
+
+        @if (addError) {
+          <div class="error">{{ addError }}</div>
+        }
+
+        @if (searchResults().length > 0) {
+          <div class="search-results-container">
+            <small>Resultados (toque para adicionar):</small>
+            <ul class="results-list">
+              @for (video of searchResults(); track video.videoId) {
+                <li (click)="addSelectedSong(video)" class="result-item">
+                  <img [src]="video.thumbnail" alt="thumb">
+                  <div class="result-info">
+                    <span class="result-title">{{ video.title }}</span>
+                  </div>
+                  <span class="material-symbols-outlined add-icon">add_circle</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>
