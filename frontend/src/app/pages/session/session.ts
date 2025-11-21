@@ -87,32 +87,39 @@ export class Session implements OnInit, OnDestroy {
 
     localStorage.setItem('currentSessionCode', this.sessionCode);
     
-    // REMOVIDA A CHAMADA REST INICIAL
-    // const initialLoadSub = this.karaokeService.getFairQueue(this.sessionCode).subscribe(...)
-    // this.subscriptions.add(initialLoadSub);
+    const joinSub = this.karaokeService.joinSession(this.sessionCode!).subscribe({
+      next: () => {
+        this.webSocketService.connect(this.sessionCode!);
+        const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
+          console.log('[WebSocket] Atualização recebida:', filaUpdate);
+          
+          // Atualiza a fila de músicas
+          const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
+          this.queue.set(mappedQueue);
+          
+          // Atualiza a música atual
+          this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
+          
+          // ATUALIZA A LISTA DE USUÁRIOS CONECTADOS
+          this.connectedUsers.set(filaUpdate.connectedUsers.map(u => ({ id: u.id, name: u.username })));
+        });
 
-    // Conecta ao WebSocket
-    this.webSocketService.connect(this.sessionCode);
-
-    // A única fonte da verdade agora é o WebSocket
-    const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
-      console.log('[WebSocket] Atualização recebida:', filaUpdate);
-      
-      // Atualiza a fila de músicas
-      const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
-      this.queue.set(mappedQueue);
-      
-      // Atualiza a música atual
-      this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
-      
-      // ATUALIZA A LISTA DE USUÁRIOS CONECTADOS
-      this.connectedUsers.set(filaUpdate.connectedUsers.map(u => ({ id: u.id, name: u.username })));
+        this.subscriptions.add(wsSub);
+      },
+      error: (err) => {
+        this.addError = 'Falha ao entrar na sessão.';
+        console.error(err);
+      }
     });
-
-    this.subscriptions.add(wsSub);
+    this.subscriptions.add(joinSub);
   }
 
   ngOnDestroy(): void {
+    if (this.sessionCode) {
+      this.karaokeService.leaveSession(this.sessionCode).subscribe({
+        error: () => {}
+      });
+    }
     this.subscriptions.unsubscribe();
     this.webSocketService.disconnect();
   }

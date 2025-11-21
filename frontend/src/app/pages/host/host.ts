@@ -86,31 +86,33 @@ export class Host implements OnInit, OnDestroy {
 
     localStorage.setItem('currentSessionCode', this.sessionCode);
 
-    // REMOVIDA A CHAMADA REST INICIAL
-    // const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe(...)
-    // this.subscriptions.add(initialLoadSub);
+    const joinSub = this.karaokeService.joinSession(this.sessionCode!).subscribe({
+      next: () => {
+        this.webSocketService.connect(this.sessionCode!);
+        const wsSub = this.webSocketService.filaUpdates$.subscribe(filaUpdate => {
+          console.log('[WebSocket] Atualização recebida (Host):', filaUpdate);
 
-    // Conecta ao WebSocket
-    this.webSocketService.connect(this.sessionCode);
+          // Atualiza a fila de músicas
+          const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
+          this.queue.set(mappedQueue);
 
-    const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
-      console.log('[WebSocket] Atualização recebida (Host):', filaUpdate);
+          // Atualiza a música atual
+          this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
 
-      // Atualiza a fila de músicas
-      const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
-      this.queue.set(mappedQueue);
-
-      // Atualiza a música atual
-      this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
-
-      // ATUALIZA A LISTA DE USUÁRIOS CONECTADOS
-      this.connectedUsers.set(filaUpdate.connectedUsers.map(u => ({ id: u.id, name: u.username })));
+          // ATUALIZA A LISTA DE USUÁRIOS CONECTADOS
+          this.connectedUsers.set(filaUpdate.connectedUsers.map(u => ({ id: u.id, name: u.username })));
+        });
+        this.subscriptions.add(wsSub);
+      },
+      error: () => { this.addError = 'Erro ao entrar.'; }
     });
-
-    this.subscriptions.add(wsSub);
+    this.subscriptions.add(joinSub);
   }
 
   ngOnDestroy(): void {
+    if (this.sessionCode) {
+      this.karaokeService.leaveSession(this.sessionCode!).subscribe({ error: () => {} });
+    }
     this.subscriptions.unsubscribe();
     this.webSocketService.disconnect();
   }

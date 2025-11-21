@@ -22,7 +22,7 @@ export interface FilaUpdate {
   songQueue: QueueItemDTO[];
   nowPlaying: QueueItemDTO | null;
   sessionStatus: string;
-  connectedUsers: ConnectedUser[]; // Adicione esta linha
+  connectedUsers: ConnectedUser[];
 }
 
 @Injectable({

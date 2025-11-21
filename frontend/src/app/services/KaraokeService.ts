@@ -93,6 +93,14 @@ export class KaraokeService {
     return this.http.get<any>(`${this.sessionsApiUrl}/${sessionCode}/fairQueue`);
   }
 
+  joinSession(sessionCode: string) {
+    return this.http.post<void>(`${this.sessionsApiUrl}/${sessionCode}/join`, {});
+  }
+
+  leaveSession(sessionCode: string) {
+    return this.http.post<void>(`${this.sessionsApiUrl}/${sessionCode}/leave`, {});
+  }
+
   // --- Métodos de Vídeo / Busca ---
 
   searchVideos(query: string): Observable<YouTubeVideo[]> {

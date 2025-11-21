@@ -36,27 +36,40 @@ export class Home {
   // Método para entrar em sessão existente
   enter() {
     this.error = null;
-    
     const id = (this.sessionId.value || '').toString().trim();
     if (!id) {
       this.error = 'Informe o ID da sessão.';
       return;
     }
-    
     this.loading = true;
 
     this.ks.getSession(id).subscribe({
       next: (session) => {
-        // Se o backend retornar a sessão, significa que ela existe/é válida
-        if (session) {
-          this.router.navigate(['/session', id]);
-        } else {
+        if (!session) {
           this.error = 'Sessão não encontrada.';
+          this.loading = false;
+          return;
         }
-        this.loading = false;
+
+        if (!this.authService.isAuthenticated()) {
+          this.loading = false;
+          this.router.navigate(['/login']);
+          return;
+        }
+
+        // Faz o join e só depois navega
+        this.ks.joinSession(id).subscribe({
+          next: () => {
+            this.router.navigate(['/session', id]);
+            this.loading = false;
+          },
+          error: () => {
+            this.error = 'Falha ao entrar na sessão.';
+            this.loading = false;
+          }
+        });
       },
-      error: (err) => {
-        console.log("Erro ao buscar sessão:", err);
+      error: () => {
         this.error = 'Sessão não encontrada ou erro de conexão.';
         this.loading = false;
       }
