@@ -5,70 +5,85 @@ import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { environment } from '../enviroments/environment';
 
 export interface UserInfo {
-  id: number;
-  name: string;
-  email: string;
+  id: number;
+  name: string;
+  email: string;
 }
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root',
 })
 export class AuthService {
-  private base = environment.apiUrl + '/auth';
-  private currentUserSubject = new BehaviorSubject<UserInfo | null>(this.getUserFromToken());
+  private base = environment.apiUrl + '/auth';
+  // Expõe o Subject como Observable público para componentes
+  public currentUser$ = new BehaviorSubject<UserInfo | null>(this.getUserFromToken()); 
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  login(email: string, password: string): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${this.base}/login`, { email, password }).pipe(
-      tap((res) => {
-        if (res?.token) localStorage.setItem('jwt', res.token);
-      })
-    );
+  login(email: string, password: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${this.base}/login`, { email, password }).pipe(
+      tap((res) => {
+        if (res?.token) {
+          localStorage.setItem('jwt', res.token);
+          // CHAVE DA CORREÇÃO: Atualiza o Subject IMEDIATAMENTE após o login
+          this.updateCurrentUser(res.token); 
+        }
+      })
+    );
+  }
+
+  register(username: string, email: string, password: string) {
+    return this.http.post(`${this.base}/register`, { username, email, password });
+  }
+
+  logout() {
+    localStorage.removeItem('jwt');
+    // Atualiza o Subject para null ao deslogar
+    this.currentUser$.next(null);
+    this.router.navigate(['/login']);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('jwt');
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+  // Este método agora usa o valor atual do Subject
+  getCurrentUser(): UserInfo | null {
+    return this.currentUser$.value; 
+  }
+  
+  // Novo método para encapsular a atualização do estado
+  private updateCurrentUser(token: string): void {
+    const user = this.decodeToken(token);
+    this.currentUser$.next(user);
   }
 
-  register(username: string, email: string, password: string) {
-    return this.http.post(`${this.base}/register`, { username, email, password });
-  }
+  private decodeToken(token: string): UserInfo | null {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
 
-  logout() {
-    localStorage.removeItem('jwt');
-    this.router.navigate(['/login']);
-  }
+      // Log para debug - veja o que está no payload
+      console.log('Token Payload:', payload);
 
-  getToken(): string | null {
-    return localStorage.getItem('jwt');
-  }
+      return {
+        id: payload.userId || payload.id,
+        name: payload.name || 'Usuário Desconhecido',
+        email: payload.sub || '',
+      };
+    } catch (e) {
+      console.error('Erro ao decodificar token', e);
+      return null;
+    }
+  }
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  getCurrentUser(): UserInfo | null {
-    return this.currentUserSubject.value;
-  }
-
-  private decodeToken(token: string): UserInfo | null {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-
-      // Log para debug - veja o que está no payload
-      console.log('Token Payload:', payload);
-
-      return {
-        id: payload.userId || payload.id,
-        name: payload.name || 'Usuário Desconhecido',
-        email: payload.sub || '',
-      };
-    } catch (e) {
-      console.error('Erro ao decodificar token', e);
-      return null;
-    }
-  }
-
-  private getUserFromToken(): UserInfo | null {
-    const token = this.getToken();
-    if (!token) return null;
+  // Inicializa o BehaviorSubject com o token existente
+  private getUserFromToken(): UserInfo | null {
+    const token = this.getToken();
+    if (!token) return null;
     return this.decodeToken(token);
-  }
+  }
 }

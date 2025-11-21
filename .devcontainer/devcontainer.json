@@ -4,7 +4,12 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
-    }
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+    "version": "latest",
+    "enableNonRootDocker": "true",
+    "mobs_mount": "true"
+}
   },
   "containerEnv": {
         "YOUTUBE_API_KEY": "AIzaSyAVAycqwz5UEDrE4cYNByMj4froM_LdBhU"
