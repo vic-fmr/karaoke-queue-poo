@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  meu-banco:  # Nome do serviço
+    image: postgres:15-alpine  # A "imagem" (o software do banco) que ele vai baixar
+    container_name: container-do-meu-projeto
+    ports:
+      - "5432:5432"  # Porta do PC : Porta do Container
+    environment:
+      POSTGRES_DB: karaq  # Nome do banco que será criado
+      POSTGRES_USER: postgres    # Usuário
+      POSTGRES_PASSWORD: password123  # Senha
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Onde salvar os dados
+    restart: always
+
+volumes:
+  postgres_data:  
