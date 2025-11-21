@@ -86,34 +86,27 @@ export class Session implements OnInit, OnDestroy {
     }
 
     localStorage.setItem('currentSessionCode', this.sessionCode);
-    this.connectedUsers.set([{id: this.userId, name: this.userName}]);
+    
+    // REMOVIDA A CHAMADA REST INICIAL
+    // const initialLoadSub = this.karaokeService.getFairQueue(this.sessionCode).subscribe(...)
+    // this.subscriptions.add(initialLoadSub);
 
-    // 1) Estado inicial via REST -> agora buscamos a fila justa calculada no servidor
-    const initialLoadSub = this.karaokeService.getFairQueue(this.sessionCode).subscribe({
-      next: (filaUpdate: any) => {
-        try {
-          const mappedQueue = this.mapDtosToView(filaUpdate.songQueue || []);
-          this.queue.set(mappedQueue);
-          this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
-        } catch (e) {
-          console.error('[Session] Erro ao processar fila justa:', e);
-          this.addError = 'Erro ao carregar a fila.';
-        }
-      },
-      error: (err) => {
-        console.error('[Session] ❌ Erro ao carregar sessão (fairQueue):', err);
-        this.addError = 'Não foi possível carregar a sessão.';
-      }
-    });
-    this.subscriptions.add(initialLoadSub);
-
-    // 2) Conecta ao WebSocket
+    // Conecta ao WebSocket
     this.webSocketService.connect(this.sessionCode);
 
+    // A única fonte da verdade agora é o WebSocket
     const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
+      console.log('[WebSocket] Atualização recebida:', filaUpdate);
+      
+      // Atualiza a fila de músicas
       const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
       this.queue.set(mappedQueue);
+      
+      // Atualiza a música atual
       this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
+      
+      // ATUALIZA A LISTA DE USUÁRIOS CONECTADOS
+      this.connectedUsers.set(filaUpdate.connectedUsers.map(u => ({ id: u.id, name: u.username })));
     });
 
     this.subscriptions.add(wsSub);

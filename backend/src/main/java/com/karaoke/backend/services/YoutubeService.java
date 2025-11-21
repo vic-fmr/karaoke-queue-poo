@@ -13,7 +13,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Service
 public class YoutubeService {
 
@@ -25,13 +27,8 @@ public class YoutubeService {
     private static final String YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/";
     private static final String USER_REGION_CODE = "BR";
 
-    @Autowired
     private Environment env;
 
-    // Injeta o RestTemplate via construtor
-    public YoutubeService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
 
     // Allow injection of RestTemplate for tests (mantém para os testes)
     public void setRestTemplate(RestTemplate restTemplate) {

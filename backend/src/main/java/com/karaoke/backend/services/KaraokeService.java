@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class KaraokeService {
 
     private final KaraokeSessionRepository sessionRepository;
-    private final FilaService filaService;
+    private final FilaService filaService; // Adicione esta injeção
     private final QueueItemRepository queueItemRepository;
     private final YoutubeService youTubeService;
     private final SongService songService;
@@ -225,5 +225,40 @@ public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, Use
         System.out.println("LOG: Próxima música (" + nextItem.getSong().getTitle() + ") selecionada e removida da fila da sessão " + accessCode);
 
         return Optional.of(nextItem);
+    }
+
+    @Transactional
+    public KaraokeSession joinSession(String sessionCode, User user) {
+        KaraokeSession session = getSession(sessionCode);
+        session.getConnectedUsers().add(user);
+        KaraokeSession savedSession = sessionRepository.save(session);
+        
+        // Notifica todos sobre a mudança na lista de usuários
+        filaService.notificarAtualizacaoFila(sessionCode);
+
+        return savedSession;
+    }
+
+    @Transactional
+    public void leaveSession(String sessionCode, User user) {
+        KaraokeSession session = getSession(sessionCode);
+        session.getConnectedUsers().remove(user);
+        sessionRepository.save(session);
+
+        // Notifica todos sobre a mudança na lista de usuários
+        filaService.notificarAtualizacaoFila(sessionCode);
+    }
+
+    @Transactional
+    public KaraokeSession createSession(User host) {
+        KaraokeSession newSession = new KaraokeSession();
+        KaraokeSession savedSession = sessionRepository.save(newSession);
+        System.out.println("LOG: Nova sessão criada! Codigo de Acesso: " + savedSession.getAccessCode());
+
+        // Adiciona o host como o primeiro usuário conectado
+        savedSession.getConnectedUsers().add(host);
+        sessionRepository.save(savedSession);
+
+        return savedSession;
     }
 }

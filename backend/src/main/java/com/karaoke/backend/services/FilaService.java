@@ -7,9 +7,12 @@ import org.springframework.stereotype.Service;
 // Importe seus DTOs
 import com.karaoke.backend.dtos.FilaUpdateDTO;
 import com.karaoke.backend.dtos.QueueItemDTO;
+import com.karaoke.backend.dtos.UserDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.repositories.KaraokeSessionRepository;
+
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
@@ -19,39 +22,44 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class FilaService {
 
-    @Autowired
-    private SimpMessagingTemplate template;
-    @Autowired
-    private KaraokeSessionRepository sessionRepository; // Assumindo um Repository para obter a Sessão
+    private final SimpMessagingTemplate template;
+    private final KaraokeSessionRepository sessionRepository; // Assumindo um Repository para obter a Sessão
     
     // Metodo que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
     public void notificarAtualizacaoFila(String accessCode) {
         
-        // 1. Busque a sessão completa (com a lista de QueueItem já ordenada pelo @OrderBy no seu modelo)
+        // 1. Busque a sessão completa
         KaraokeSession session = sessionRepository.findByAccessCode(accessCode)
             .orElseThrow(() -> new RuntimeException("Sessão não encontrada."));
-    // 2. Calcula a fila justa (interleaving por usuário) para envio ao front
-    List<com.karaoke.backend.models.QueueItem> fairOrdered = computeFairOrder(session);
 
-    // 3. Mapeia a lista justa para DTOs
-    List<QueueItemDTO> dtoList = fairOrdered.stream()
-        .map(QueueItemDTO::fromEntity)
-        .collect(Collectors.toList());
+        // 2. Calcula a fila justa (interleaving por usuário) para envio ao front
+        List<com.karaoke.backend.models.QueueItem> fairOrdered = computeFairOrder(session);
 
-    // 4. Lógica de "nowPlaying": primeiro item da lista justa (ou null se vazia)
+        // 3. Mapeia a lista justa para DTOs
+        List<QueueItemDTO> dtoList = fairOrdered.stream()
+            .map(QueueItemDTO::fromEntity)
+            .collect(Collectors.toList());
+
+        // 4. Mapeia os usuários conectados para DTOs
+        List<UserDTO> connectedUsersDTO = session.getConnectedUsers().stream()
+            .map(UserDTO::fromEntity)
+            .collect(Collectors.toList());
+
+        // 5. Lógica de "nowPlaying": primeiro item da lista justa (ou null se vazia)
         QueueItemDTO nowPlayingDTO = dtoList.isEmpty() ? null : dtoList.get(0);
 
         FilaUpdateDTO filaAtualizada = new FilaUpdateDTO(
             dtoList,
             nowPlayingDTO,
-            session.getStatus().name()
+            session.getStatus().name(),
+            connectedUsersDTO // Inclui a lista de usuários
         );
         
-        // 4. Envie a atualização para o tópico de WebSocket
-        // Tópico: /topic/fila/{accessCode}
+        // 6. Envie a atualização para o tópico de WebSocket
         String destination = "/topic/fila/" + accessCode;
         template.convertAndSend(destination, filaAtualizada);
     }

@@ -85,29 +85,26 @@ export class Host implements OnInit, OnDestroy {
     }
 
     localStorage.setItem('currentSessionCode', this.sessionCode);
-    this.connectedUsers.set([{id: this.userId, name: this.userName}]);
 
-    // 1) Estado inicial via REST
-    const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe({
-      next: (session: KaraokeSession) => {
-        const mappedQueue = this.mapEntitiesToView(session.songQueue);
-        this.queue.set(mappedQueue);
-        this.current.set(null); // O WebSocket vai atualizar se tiver algo tocando
-      },
-      error: (err) => {
-        console.error('[Session] ❌ Erro ao carregar sessão:', err);
-        this.addError = 'Não foi possível carregar a sessão.';
-      }
-    });
-    this.subscriptions.add(initialLoadSub);
+    // REMOVIDA A CHAMADA REST INICIAL
+    // const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe(...)
+    // this.subscriptions.add(initialLoadSub);
 
-    // 2) Conecta ao WebSocket
+    // Conecta ao WebSocket
     this.webSocketService.connect(this.sessionCode);
 
     const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
+      console.log('[WebSocket] Atualização recebida (Host):', filaUpdate);
+
+      // Atualiza a fila de músicas
       const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
       this.queue.set(mappedQueue);
+
+      // Atualiza a música atual
       this.current.set(filaUpdate.nowPlaying ? this.mapDtoToView(filaUpdate.nowPlaying) : null);
+
+      // ATUALIZA A LISTA DE USUÁRIOS CONECTADOS
+      this.connectedUsers.set(filaUpdate.connectedUsers.map(u => ({ id: u.id, name: u.username })));
     });
 
     this.subscriptions.add(wsSub);

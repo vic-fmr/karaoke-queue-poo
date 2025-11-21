@@ -1,14 +1,14 @@
 import {Component} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ReactiveFormsModule, FormControl, Validators} from '@angular/forms';
-import {Router, RouterLink} from '@angular/router';
+import {Router } from '@angular/router';
 import {KaraokeService} from '../../services/KaraokeService';
 import {AuthService} from '../../services/AuthService';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './home.html',
   styleUrls: ['./home.css'],
 })

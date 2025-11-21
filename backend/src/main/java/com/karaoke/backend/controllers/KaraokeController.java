@@ -23,9 +23,9 @@ import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.models.KaraokeSession;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.services.KaraokeService;
+import com.karaoke.backend.services.FilaService; // Importe o FilaService
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -33,8 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class KaraokeController {
 
     private final KaraokeService service;
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private com.karaoke.backend.services.FilaService filaService;
+    // Injeção via construtor (Lombok @RequiredArgsConstructor cuida disso)
+    private final FilaService filaService;
+
     @PostMapping
     public ResponseEntity<KaraokeSession> createSession() {
         KaraokeSession newSession = service.createSession();
@@ -81,15 +82,30 @@ public class KaraokeController {
     @GetMapping("/{sessionCode}/fairQueue")
     public ResponseEntity<com.karaoke.backend.dtos.FilaUpdateDTO> getFairQueue(@PathVariable String sessionCode) {
         KaraokeSession session = service.getSession(sessionCode.toUpperCase());
-        java.util.List<com.karaoke.backend.models.QueueItem> fair = filaService == null
-                ? java.util.List.of()
-                : filaService.computeFairOrder(session);
+        
+        // Calcula a fila justa
+        java.util.List<com.karaoke.backend.models.QueueItem> fair = filaService.computeFairOrder(session);
+        
+        // Mapeia a fila para DTOs
         java.util.List<com.karaoke.backend.dtos.QueueItemDTO> dtoList = fair.stream()
                 .map(com.karaoke.backend.dtos.QueueItemDTO::fromEntity)
                 .toList();
+        
+        // Mapeia os usuários para DTOs
+        List<UserDTO> userDTOs = session.getConnectedUsers().stream()
+                .map(UserDTO::fromEntity)
+                .collect(Collectors.toList());
+
         com.karaoke.backend.dtos.QueueItemDTO nowPlaying = dtoList.isEmpty() ? null : dtoList.get(0);
-        com.karaoke.backend.dtos.FilaUpdateDTO dto = new com.karaoke.backend.dtos.FilaUpdateDTO(dtoList, nowPlaying,
-                session.getStatus() == null ? null : session.getStatus().name());
+        
+        // Constrói o DTO com os 4 argumentos corretos
+        com.karaoke.backend.dtos.FilaUpdateDTO dto = new com.karaoke.backend.dtos.FilaUpdateDTO(
+            dtoList, 
+            nowPlaying,
+            session.getStatus() == null ? null : session.getStatus().name(),
+            userDTOs // Adiciona a lista de usuários
+        );
+        
         return ResponseEntity.ok(dto);
     }
 

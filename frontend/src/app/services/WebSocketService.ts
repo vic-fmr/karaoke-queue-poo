@@ -12,10 +12,17 @@ export interface QueueItemDTO {
   queueItemId: number;
 }
 
+// Interface para representar um usuário conectado
+export interface ConnectedUser {
+  id: number;
+  username: string;
+}
+
 export interface FilaUpdate {
   songQueue: QueueItemDTO[];
   nowPlaying: QueueItemDTO | null;
   sessionStatus: string;
+  connectedUsers: ConnectedUser[]; // Adicione esta linha
 }
 
 @Injectable({
