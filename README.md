@@ -80,8 +80,8 @@ npm start
 
 ## 🗂️ Entregas
 
-\<details\>
-\<summary\>Entrega 01\</summary\>
+<details>
+<summary>Entrega 01</summary>
 
 ### Histórias de usuários
 
@@ -94,10 +94,10 @@ npm start
   - Link Screencast alternativo (Drive): [https://drive.google.com/file/d/1CZbQ0-OU7feeF81PJM8lqcsiI8qBAj1g/view?usp=sharing](https://drive.google.com/file/d/1CZbQ0-OU7feeF81PJM8lqcsiI8qBAj1g/view?usp=sharing)
   - [link suspeito removido]
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>Entrega 02\</summary\>
+<details>
+<summary>Entrega 02</summary>
 
 ### 2 Funcionalidades Implementadas
 
@@ -105,10 +105,10 @@ npm start
   - Issue/Bug Tracker 1 (Github): [https://drive.google.com/file/d/1ifb4oiXXE2wI4W\_kj5F0w\_hyvJO1u2Hs/view?usp=drive\_link](https://drive.google.com/file/d/1ifb4oiXXE2wI4W_kj5F0w_hyvJO1u2Hs/view?usp=drive_link)
   - Issue/Bug Tracker 2 (Github): [https://drive.google.com/file/d/1tpihUOwz2knCuZ8nn8REKV\_hbypas1Ug/view?usp=drive\_link](https://drive.google.com/file/d/1tpihUOwz2knCuZ8nn8REKV_hbypas1Ug/view?usp=drive_link)
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>Entrega 03\</summary\>
+<details>
+<summary>Entrega 03</summary>
 
 ### 2 Funcionalidades Implementadas
 
@@ -121,10 +121,10 @@ npm start
   - Link Screencast Testes Youtube: [https://youtu.be/Nm\_NFuRtC1s](https://youtu.be/Nm_NFuRtC1s)
   - Link Screencast Testes Alternativo (Drive): [https://drive.google.com/file/d/1kxfHKaIiGUBHdnxwXYX9sX6ZoagGvrvS/view?usp=drive\_link](https://drive.google.com/file/d/1kxfHKaIiGUBHdnxwXYX9sX6ZoagGvrvS/view?usp=drive_link)
 
-\</details\>
+</details>
 
-\<details\>
-\<summary\>Entrega 04\</summary\>
+<details>
+<summary>Entrega 04</summary>
 
 ### 3 Funcionalidades Implementadas
 
@@ -134,7 +134,7 @@ npm start
   - Issue/Bug Tracker 3 (Github): [https://drive.google.com/drive/u/0/folders/1U6ZqkiD2ooi9pO8envf3r33XOlHdvZJf](https://drive.google.com/drive/u/0/folders/1U6ZqkiD2ooi9pO8envf3r33XOlHdvZJf)
   - Link Screencast Testes Youtube: [https://youtu.be/nV07ow5Mlg4](https://youtu.be/nV07ow5Mlg4)
 
-\</details\>
+</details>
 
 -----
 
@@ -145,4 +145,5 @@ npm start
   - Lucas Rodrigues - [@lucxsz-web](https://github.com/lucxsz-web) - [Linkedin](https://www.linkedin.com/in/lucas-rodrigues-08261b2ba/)
   - René Melo - [@renysoo](https://github.com/renysoo) - [Linkedin](https://www.linkedin.com/in/renelucena/)
   - Victor Ferreira - [@vic-fmr](https://github.com/vic-fmr) - [Linkedin](https://www.linkedin.com/in/victor-ferreira-marques/)
+
 
