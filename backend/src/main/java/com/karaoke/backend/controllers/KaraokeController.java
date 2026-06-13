@@ -33,48 +33,33 @@ import lombok.RequiredArgsConstructor;
 public class KaraokeController {
 
     private final KaraokeService service;
-    // Injeção via construtor (Lombok @RequiredArgsConstructor cuida disso)
     private final FilaService filaService;
+    private final com.karaoke.backend.repositories.UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<KaraokeSession> createSession() {
-        KaraokeSession newSession = service.createSession();
+    public ResponseEntity<KaraokeSession> createSession(java.security.Principal principal) {
+        User host = null;
+        if (principal != null) {
+            host = userRepository.findByEmail(principal.getName()).orElse(null);
+        }
+        KaraokeSession newSession = service.createSession(host);
         URI location = URI.create(String.format("/api/sessions/%s", newSession.getAccessCode()));
         return ResponseEntity.created(location).body(newSession);
     }
 
+    /* 
+     * Endpoint removido por segurança em produção para evitar vazamento de códigos de acesso.
+     * Se precisar listar, implemente uma lógica de perfil ADMIN.
     @GetMapping
     public ResponseEntity<List<KaraokeSession>> getAllSessions() {
         List<KaraokeSession> session = service.getAllSessions();
         return ResponseEntity.ok(session);
     }
+    */
     
     @GetMapping("/{sessionCode}")
     public ResponseEntity<SessionResponseDTO> getSession(@PathVariable String sessionCode) {
-        KaraokeSession session = service.getSession(sessionCode);
-
-        // Mapeia a fila e os usuários para DTOs
-        List<QueueItemDTO> queueDTOs = session.getSongQueue().stream()
-                .map(QueueItemDTO::fromEntity)
-                .collect(Collectors.toList());
-
-        List<UserDTO> userDTOs = session.getConnectedUsers().stream()
-                .map(UserDTO::fromEntity)
-                .collect(Collectors.toList());
-
-        // Define o que está tocando (primeiro da fila)
-        QueueItemDTO nowPlaying = queueDTOs.isEmpty() ? null : queueDTOs.get(0);
-
-        // Cria e retorna o DTO de resposta
-        SessionResponseDTO responseDTO = new SessionResponseDTO(
-                session.getId(),
-                session.getAccessCode(),
-                session.getStatus().name(),
-                userDTOs,
-                queueDTOs,
-                nowPlaying
-        );
-
+        SessionResponseDTO responseDTO = service.getSessionResponse(sessionCode);
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -103,7 +88,8 @@ public class KaraokeController {
             dtoList, 
             nowPlaying,
             session.getStatus() == null ? null : session.getStatus().name(),
-            userDTOs // Adiciona a lista de usuários
+            userDTOs,
+            session.getHost() != null ? session.getHost().getEmail() : null
         );
         
         return ResponseEntity.ok(dto);
@@ -129,7 +115,13 @@ public class KaraokeController {
 
     @PostMapping("/{sessionCode}/queue/next")
     public ResponseEntity<Void> playNextSong(
-            @PathVariable String sessionCode) {
+            @PathVariable String sessionCode,
+            java.security.Principal principal) {
+        
+        KaraokeSession session = service.getSession(sessionCode);
+        if (principal == null || session.getHost() == null || !session.getHost().getEmail().equals(principal.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         service.playNextSong(sessionCode);
 
@@ -137,13 +129,27 @@ public class KaraokeController {
     }
 
     @DeleteMapping("/{sessionCode}")
-    public ResponseEntity<Void> endSession(@PathVariable String sessionCode) {
+    public ResponseEntity<Void> endSession(@PathVariable String sessionCode, java.security.Principal principal) {
+        KaraokeSession session = service.getSession(sessionCode);
+        if (principal == null || session.getHost() == null || !session.getHost().getEmail().equals(principal.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         service.endSession(sessionCode);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{sessionCode}/queue/{queueItemId}")
-    public ResponseEntity<Void> deleteSongFromQueue(@PathVariable String sessionCode, @PathVariable Long queueItemId) {
+    public ResponseEntity<Void> deleteSongFromQueue(
+            @PathVariable String sessionCode, 
+            @PathVariable Long queueItemId,
+            java.security.Principal principal) {
+        
+        KaraokeSession session = service.getSession(sessionCode);
+        if (principal == null || session.getHost() == null || !session.getHost().getEmail().equals(principal.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         service.deleteSongFromQueue(sessionCode, queueItemId);
         return ResponseEntity.noContent().build();
     }

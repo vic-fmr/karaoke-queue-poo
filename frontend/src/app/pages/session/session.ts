@@ -40,6 +40,8 @@ export class Session implements OnInit, OnDestroy {
   sessionCode: string | null = null;
   userName: string = '';
   userId: number = 0;
+  userEmail: string = ''; // Adicionado
+  hostEmail: string = ''; // Adicionado
   
   connectedUsers = signal<ConnectedUser[]>([]);
   
@@ -77,6 +79,7 @@ export class Session implements OnInit, OnDestroy {
 
     this.userId = currentUser.id;
     this.userName = currentUser.name;
+    this.userEmail = currentUser.email || ''; // Adicionado
 
     this.sessionCode = this.route.snapshot.paramMap.get('id') || localStorage.getItem('currentSessionCode');
 
@@ -87,16 +90,32 @@ export class Session implements OnInit, OnDestroy {
 
     localStorage.setItem('currentSessionCode', this.sessionCode);
     
-    // REMOVIDA A CHAMADA REST INICIAL
-    // const initialLoadSub = this.karaokeService.getFairQueue(this.sessionCode).subscribe(...)
-    // this.subscriptions.add(initialLoadSub);
+    // Busca dados iniciais (Fila, Host, Status)
+    if (this.sessionCode) {
+      this.karaokeService.getSession(this.sessionCode).subscribe(session => {
+        console.log('[Session] Estado inicial carregado:', session);
+        this.hostEmail = session.hostEmail || '';
 
-    // Conecta ao WebSocket
+        // Popula a fila inicial
+        const mappedQueue = this.mapDtosToView(session.songQueue || []);
+        this.queue.set(mappedQueue);
+
+        // Popula a música atual inicial
+        this.current.set(session.nowPlaying ? this.mapDtoToView(session.nowPlaying) : null);
+
+        // Popula usuários iniciais
+        this.connectedUsers.set((session.connectedUsers || []).map(u => ({ id: u.id, name: u.username })));
+      });
+    }
+
+    // Conecta ao WebSocket para atualizações futuras
     this.webSocketService.connect(this.sessionCode);
 
     // A única fonte da verdade agora é o WebSocket
     const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
       console.log('[WebSocket] Atualização recebida:', filaUpdate);
+      
+      this.hostEmail = filaUpdate.hostEmail; // Atualiza o host
       
       // Atualiza a fila de músicas
       const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);
@@ -177,6 +196,18 @@ export class Session implements OnInit, OnDestroy {
       error: (err) => console.error('[Session] Erro ao remover música', err),
     });
     this.subscriptions.add(removeSub);
+  }
+
+  playNextSong() {
+    if (!this.sessionCode) return;
+    this.karaokeService.playNextSong(this.sessionCode).subscribe({
+      next: () => console.log('Próxima música iniciada'),
+      error: (err) => console.error('Erro ao pular música', err)
+    });
+  }
+
+  get isHost(): boolean {
+    return !!this.userEmail && this.userEmail === this.hostEmail;
   }
 
   isAddedByMe(item: QueueViewItem): boolean {

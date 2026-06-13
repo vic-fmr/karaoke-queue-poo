@@ -32,10 +32,14 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed-origins:*}")
+    private String allowedOrigins;
+
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // Em produção, você deve definir a env CORS_ALLOWED_ORIGINS com o domínio do seu front
+        configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

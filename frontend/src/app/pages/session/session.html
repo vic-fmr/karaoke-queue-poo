@@ -17,6 +17,14 @@
           <div class="current">
             <div class="title">{{ current()?.songTitle }}</div>
             <div class="by">Adicionado por: {{ current()?.addedByUserName }}</div>
+            
+            <!-- Botão administrativo apenas para o Host -->
+            @if (isHost) {
+              <button class="next-btn" (click)="playNextSong()">
+                <span class="material-symbols-outlined">skip_next</span>
+                Próxima Música
+              </button>
+            }
           </div>
         } @else {
           <div class="none">Nenhuma música tocando.</div>

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,10 @@ public class KaraokeSession {
     @Enumerated(EnumType.STRING)
     private SessionStatus status = SessionStatus.WAITING;
 
+    @ManyToOne
+    @JoinColumn(name = "host_id")
+    private User host;
+
     @OneToMany(mappedBy = "session")
     private List<User> connectedUsers = new ArrayList<>();
 
@@ -37,6 +42,8 @@ public class KaraokeSession {
 
     // Índice dentro de rotationUserIds apontando qual usuário será servido a seguir.
     private int nextUserIndex = 0;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
 
 
     // O metodo generateAccessCode() continua o mesmo...

@@ -32,9 +32,9 @@ public class FilaService {
     // Metodo que você chamará sempre que a fila mudar (Adicionar, Remover, Pular)
     public void notificarAtualizacaoFila(String accessCode) {
         
-        // 1. Busque a sessão completa
-        KaraokeSession session = sessionRepository.findByAccessCode(accessCode)
-            .orElseThrow(() -> new RuntimeException("Sessão não encontrada."));
+        // 1. Busque a sessão completa (Normalizando o código)
+        KaraokeSession session = sessionRepository.findByAccessCode(accessCode.toUpperCase())
+            .orElseThrow(() -> new RuntimeException("Sessão não encontrada: " + accessCode));
 
         // 2. Calcula a fila justa (interleaving por usuário) para envio ao front
         List<com.karaoke.backend.models.QueueItem> fairOrdered = computeFairOrder(session);
@@ -56,11 +56,12 @@ public class FilaService {
             dtoList,
             nowPlayingDTO,
             session.getStatus().name(),
-            connectedUsersDTO // Inclui a lista de usuários
+            connectedUsersDTO,
+            session.getHost() != null ? session.getHost().getEmail() : null
         );
         
-        // 6. Envie a atualização para o tópico de WebSocket
-        String destination = "/topic/fila/" + accessCode;
+        // 6. Envie a atualização para o tópico de WebSocket (Sempre normalizado em maiúsculas)
+        String destination = "/topic/fila/" + accessCode.toUpperCase();
         template.convertAndSend(destination, filaAtualizada);
     }
 

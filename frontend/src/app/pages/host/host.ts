@@ -42,10 +42,10 @@ export class Host implements OnInit, OnDestroy {
   sessionCode: string | null = null;
   userName: string = '';
   userId: number = 0;
+  userEmail: string = ''; // Adicionado
   
   // Define se este usuário é o Host (quem controla o player)
-  // Futuramente, você pode validar isso baseado no ID do criador da sessão
-  isHost: boolean = true; 
+  isHost: boolean = false; 
 
   connectedUsers = signal<ConnectedUser[]>([]);
   searchResults = signal<YouTubeVideo[]>([]);
@@ -77,6 +77,8 @@ export class Host implements OnInit, OnDestroy {
 
     this.userId = currentUser.id;
     this.userName = currentUser.name;
+    this.userEmail = currentUser.email || '';
+
     this.sessionCode = this.route.snapshot.paramMap.get('id') || localStorage.getItem('currentSessionCode');
 
     if (!this.sessionCode) {
@@ -86,15 +88,34 @@ export class Host implements OnInit, OnDestroy {
 
     localStorage.setItem('currentSessionCode', this.sessionCode);
 
-    // REMOVIDA A CHAMADA REST INICIAL
-    // const initialLoadSub = this.karaokeService.getSession(this.sessionCode).subscribe(...)
-    // this.subscriptions.add(initialLoadSub);
+    // Busca dados iniciais (Fila, Host, Status)
+    if (this.sessionCode) {
+      this.karaokeService.getSession(this.sessionCode).subscribe(session => {
+        console.log('[Host] Estado inicial carregado:', session);
+        
+        // Verifica se o usuário atual é o Host real
+        this.isHost = !!this.userEmail && this.userEmail === session.hostEmail;
+
+        // Popula a fila inicial
+        const mappedQueue = this.mapDtosToView(session.songQueue || []);
+        this.queue.set(mappedQueue);
+        
+        // Popula a música atual inicial
+        this.current.set(session.nowPlaying ? this.mapDtoToView(session.nowPlaying) : null);
+        
+        // Popula usuários iniciais
+        this.connectedUsers.set((session.connectedUsers || []).map(u => ({ id: u.id, name: u.username })));
+      });
+    }
 
     // Conecta ao WebSocket
     this.webSocketService.connect(this.sessionCode);
 
     const wsSub = this.webSocketService.filaUpdates$.subscribe((filaUpdate: FilaUpdate) => {
       console.log('[WebSocket] Atualização recebida (Host):', filaUpdate);
+      
+      // Atualiza o estado de host (caso mude)
+      this.isHost = !!this.userEmail && this.userEmail === filaUpdate.hostEmail;
 
       // Atualiza a fila de músicas
       const mappedQueue = this.mapDtosToView(filaUpdate.songQueue);

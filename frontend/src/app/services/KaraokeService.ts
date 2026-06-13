@@ -32,8 +32,9 @@ export interface KaraokeSession {
   accessCode: string;
   status: 'WAITING' | 'PLAYING' | 'CLOSED' | string;
   connectedUsers: User[];
-  songQueue: QueueItemEntity[];
+  songQueue: QueueItemDTO[]; // Alterado de QueueItemEntity para QueueItemDTO
   nowPlaying?: QueueItemDTO | null;
+  hostEmail?: string;
 }
 
 // 1. ATUALIZADO: Interface para o POST (corpo da requisição)

@@ -27,6 +27,7 @@ public class YoutubeService {
     private static final String YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/";
     private static final String USER_REGION_CODE = "BR";
 
+    @Autowired
     private Environment env;
 
 

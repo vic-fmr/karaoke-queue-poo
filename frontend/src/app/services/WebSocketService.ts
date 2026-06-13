@@ -22,7 +22,8 @@ export interface FilaUpdate {
   songQueue: QueueItemDTO[];
   nowPlaying: QueueItemDTO | null;
   sessionStatus: string;
-  connectedUsers: ConnectedUser[]; // Adicione esta linha
+  connectedUsers: ConnectedUser[];
+  hostEmail: string; // Adicionado
 }
 
 @Injectable({
@@ -41,6 +42,8 @@ export class WebSocketService {
         return new SockJS(`${environment.apiUrl}/ws`);
       },
       reconnectDelay: 5000,
+      heartbeatIncoming: 20000, // Recebe ping a cada 20s
+      heartbeatOutgoing: 20000, // Envia ping a cada 20s
       debug: (str) => {
         console.log('[STOMP Debug]', str);
       },
@@ -58,7 +61,7 @@ export class WebSocketService {
     this.client.onConnect = (frame) => {
       console.log('[WebSocket] ✓ Conectado com sucesso!', frame);
 
-      const topic = `/topic/fila/${sessionCode}`;
+      const topic = `/topic/fila/${sessionCode.toUpperCase()}`;
       console.log(`[WebSocket] Inscrevendo-se no tópico: ${topic}`);
 
       this.client.subscribe(topic, (message: IMessage) => {

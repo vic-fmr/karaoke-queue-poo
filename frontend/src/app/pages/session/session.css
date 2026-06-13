@@ -106,6 +106,36 @@ h3, h4 {
   color: var(--text-muted);
 }
 
+.next-btn {
+  margin-top: 15px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: background-color 0.3s, transform 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.next-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.next-btn:active {
+  transform: translateY(0);
+}
+
+.next-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
 .none {
   color: var(--text-muted);
   font-style: italic;
