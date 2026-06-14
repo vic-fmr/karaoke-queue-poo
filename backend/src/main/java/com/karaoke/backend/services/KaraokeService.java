@@ -140,13 +140,13 @@ public class KaraokeService {
         if (rotation == null) rotation = new java.util.ArrayList<>();
 
         if (rotation.isEmpty()) {
-            if (rotation.isEmpty()) {
-                rotation.add(uid);
-                session.setNextUserIndex(0);
-            } else if (!uid.isEmpty() && !rotation.contains(uid)) {
-                // --- CORREÇÃO: Adiciona ao FINAL da rotação para não furar a fila de quem já espera ---
-                rotation.add(uid);
-            }
+            rotation.add(uid);
+            session.setNextUserIndex(0);
+        } else if (!uid.isEmpty() && !rotation.contains(uid)) {
+            // --- CORREÇÃO: Adiciona ao FINAL da rotação para não furar a fila de quem já espera ---
+            rotation.add(uid);
+        }
+
         session.setRotationUserIds(rotation);
         sessionRepository.save(session);
 
