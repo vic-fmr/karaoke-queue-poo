@@ -13,8 +13,10 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputPath": "dist/QueueUp-Login",
+            "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js", "src/polyfills.js"],
+            "polyfills": ["zone.js", "src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
