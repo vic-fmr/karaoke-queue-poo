@@ -138,7 +138,14 @@ public class KaraokeController {
             @AuthenticationPrincipal User user) {
         
         KaraokeSession session = service.getSession(sessionCode);
-        if (user == null || session.getHost() == null || !session.getHost().getId().equals(user.getId())) {
+        QueueItem queueItem = service.getQueueItem(queueItemId);
+        Boolean isHost = session.getHost() != null && user != null && session.getHost().getId().equals(user.getId());
+        Boolean isOwnerOfQueueItem = queueItem.getUser() != null && user != null && queueItem.getUser().getId().equals(user.getId());
+
+        // Só pode deletar se for o host da sessão ou o próprio usuário que adicionou a música na fila
+        if (
+            !isHost && !isOwnerOfQueueItem
+        ) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
