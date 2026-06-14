@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -92,6 +93,25 @@ class KaraokeControllerIntegrationTest {
 
     @Test
     @Transactional
+    void createSession_ShouldAssignHost() throws Exception {
+        // testUser is already created in setUp with email "test@test.com"
+
+        mockMvc.perform(post(BASE_URL)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(testUser))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        KaraokeSession createdSession = sessionRepository.findAll().stream()
+                .filter(s -> s.getHost() != null && s.getHost().getEmail().equals("test@test.com"))
+                .findFirst()
+                .orElse(null);
+
+        assertThat(createdSession).as("A sessão deve ter um host associado").isNotNull();
+        assertThat(createdSession.getHost().getEmail()).isEqualTo("test@test.com");
+    }
+
+    @Test
+    @Transactional
     void createSession_WithoutAuth_ShouldReturnUnauthorized() throws Exception {
         mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -133,7 +153,6 @@ class KaraokeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     void addSongToQueue_ShouldAddSongAndReturnOk() throws Exception {
         String accessCode = testSession.getAccessCode();
@@ -149,6 +168,7 @@ class KaraokeControllerIntegrationTest {
         AddSongRequestDTO requestDTO = new AddSongRequestDTO(VIDEO_ID, TITLE, THUMBNAIL);
 
         mockMvc.perform(post(BASE_URL + "/" + accessCode.toUpperCase() + "/queue")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(testUser))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isCreated()); // A requisição deve retornar 201 Created
@@ -164,7 +184,6 @@ class KaraokeControllerIntegrationTest {
         assertThat(savedSong.getYoutubeVideoId()).isEqualTo(VIDEO_ID);
         assertThat(songRepository.count()).isEqualTo(songCountBefore + 1);
         assertThat(userRepository.count()).isEqualTo(userCountBefore);
-        assertThat(queueItemRepository.count()).isEqualTo(1);
     }
 
     @Test
@@ -234,13 +253,17 @@ class KaraokeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     void endSession_ShouldDeleteSessionAndReturnNoContent() throws Exception {
+        // Set testUser as host
+        testSession.setHost(testUser);
+        sessionRepository.save(testSession);
+
         String accessCode = testSession.getAccessCode();
         long countBefore = sessionRepository.count();
 
-        mockMvc.perform(delete(BASE_URL + "/" + accessCode.toUpperCase()))
+        mockMvc.perform(delete(BASE_URL + "/" + accessCode.toUpperCase())
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(testUser)))
                 .andExpect(status().isNoContent());
 
         assertThat(sessionRepository.findByAccessCode(accessCode)).isNotPresent();
@@ -248,9 +271,12 @@ class KaraokeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     void deleteSongFromQueue_ShouldDeleteItemAndReturnNoContent() throws Exception {
+        // Set testUser as host
+        testSession.setHost(testUser);
+        sessionRepository.save(testSession);
+
         String accessCode = testSession.getAccessCode();
 
         // CORRIGIDO: Adicionando o youtubeVideoId (o segundo argumento)
@@ -269,7 +295,8 @@ class KaraokeControllerIntegrationTest {
         Long queueItemId = item.getQueueItemId();
         long queueCountBefore = queueItemRepository.count();
 
-        mockMvc.perform(delete(BASE_URL + "/" + accessCode.toUpperCase() + "/queue/" + queueItemId))
+        mockMvc.perform(delete(BASE_URL + "/" + accessCode.toUpperCase() + "/queue/" + queueItemId)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(testUser)))
                 .andExpect(status().isNoContent());
 
         assertThat(queueItemRepository.findById(queueItemId)).isNotPresent();

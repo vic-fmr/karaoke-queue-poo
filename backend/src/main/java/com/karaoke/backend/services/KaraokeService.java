@@ -105,22 +105,16 @@ public class KaraokeService {
     public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, User user) {
         KaraokeSession session = getSession(accessCode);
 
+        // Se o objeto User for nulo, tenta buscar pelo contexto de segurança (caso seja um MockUser em testes ou outro tipo de principal)
         if (user == null) {
-            try {
-                var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-                if (auth != null && auth.isAuthenticated() && !(auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
-                    String username = auth.getName();
-                    if (username != null) {
-                        final String uname = username;
-                        user = userRepository.findByUsername(uname).orElseGet(() -> {
-                            com.karaoke.backend.models.User nu = new com.karaoke.backend.models.User();
-                            nu.setUsername(uname);
-                            com.karaoke.backend.models.User saved = userRepository.save(nu);
-                            return saved;
-                        });
-                    }
-                }
-            } catch (Exception ignored) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !(auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
+                String username = auth.getName();
+                user = userRepository.findByUsername(username).orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setUsername(username);
+                    return userRepository.save(newUser);
+                });
             }
         }
 
@@ -182,23 +176,6 @@ public class KaraokeService {
         }
 
         filaService.notificarAtualizacaoFila(accessCode);
-    }
-
-    @Transactional
-    public void addSongToQueue(String accessCode, YouTubeVideoDTO selectedVideo, java.security.Principal principal) {
-        com.karaoke.backend.models.User user = null;
-        if (principal != null) {
-            String username = principal.getName();
-            if (username != null) {
-                final String uname = username;
-                user = userRepository.findByUsername(uname).orElseGet(() -> {
-                    com.karaoke.backend.models.User nu = new com.karaoke.backend.models.User();
-                    nu.setUsername(uname);
-                    return userRepository.save(nu);
-                });
-            }
-        }
-        addSongToQueue(accessCode, selectedVideo, user);
     }
 
     @Transactional

@@ -37,25 +37,17 @@ public class KaraokeController {
     private final com.karaoke.backend.repositories.UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<KaraokeSession> createSession(java.security.Principal principal) {
-        User host = null;
-        if (principal != null) {
-            host = userRepository.findByEmail(principal.getName()).orElse(null);
-        }
+    public ResponseEntity<KaraokeSession> createSession(@AuthenticationPrincipal User host) {
         KaraokeSession newSession = service.createSession(host);
         URI location = URI.create(String.format("/api/sessions/%s", newSession.getAccessCode()));
         return ResponseEntity.created(location).body(newSession);
     }
 
-    /* 
-     * Endpoint removido por segurança em produção para evitar vazamento de códigos de acesso.
-     * Se precisar listar, implemente uma lógica de perfil ADMIN.
     @GetMapping
     public ResponseEntity<List<KaraokeSession>> getAllSessions() {
         List<KaraokeSession> session = service.getAllSessions();
         return ResponseEntity.ok(session);
     }
-    */
     
     @GetMapping("/{sessionCode}")
     public ResponseEntity<SessionResponseDTO> getSession(@PathVariable String sessionCode) {
@@ -99,7 +91,7 @@ public class KaraokeController {
     public ResponseEntity<Void> addSongToQueue(
             @PathVariable String sessionCode,
             @RequestBody AddSongRequestDTO request,
-            java.security.Principal principal) {
+            @AuthenticationPrincipal User user) {
         YouTubeVideoDTO videoEscolhido = new YouTubeVideoDTO();
         videoEscolhido.setVideoId(request.videoId());
         videoEscolhido.setTitle(request.title());
@@ -108,7 +100,7 @@ public class KaraokeController {
         service.addSongToQueue(
                 sessionCode,
                 videoEscolhido,
-                principal);
+                user);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -116,10 +108,10 @@ public class KaraokeController {
     @PostMapping("/{sessionCode}/queue/next")
     public ResponseEntity<Void> playNextSong(
             @PathVariable String sessionCode,
-            java.security.Principal principal) {
+            @AuthenticationPrincipal User user) {
         
         KaraokeSession session = service.getSession(sessionCode);
-        if (principal == null || session.getHost() == null || !session.getHost().getEmail().equals(principal.getName())) {
+        if (user == null || session.getHost() == null || !session.getHost().getId().equals(user.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -129,9 +121,9 @@ public class KaraokeController {
     }
 
     @DeleteMapping("/{sessionCode}")
-    public ResponseEntity<Void> endSession(@PathVariable String sessionCode, java.security.Principal principal) {
+    public ResponseEntity<Void> endSession(@PathVariable String sessionCode, @AuthenticationPrincipal User user) {
         KaraokeSession session = service.getSession(sessionCode);
-        if (principal == null || session.getHost() == null || !session.getHost().getEmail().equals(principal.getName())) {
+        if (user == null || session.getHost() == null || !session.getHost().getId().equals(user.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -143,10 +135,10 @@ public class KaraokeController {
     public ResponseEntity<Void> deleteSongFromQueue(
             @PathVariable String sessionCode, 
             @PathVariable Long queueItemId,
-            java.security.Principal principal) {
+            @AuthenticationPrincipal User user) {
         
         KaraokeSession session = service.getSession(sessionCode);
-        if (principal == null || session.getHost() == null || !session.getHost().getEmail().equals(principal.getName())) {
+        if (user == null || session.getHost() == null || !session.getHost().getId().equals(user.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
