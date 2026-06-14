@@ -85,17 +85,21 @@
               [(ngModel)]="urlToAdd" 
               (keydown.enter)="search()" 
               placeholder="Buscar música..."
-              [disabled]="isSearching() || isAddingSong"
+              [disabled]="isSearching() || isAddingSong || isRemovingSong()"
             />
-            <button (click)="search()" [disabled]="isSearching() || isAddingSong">
+            <button (click)="search()" [disabled]="isSearching() || isAddingSong || isRemovingSong()">
               <span class="material-symbols-outlined">search</span>
             </button>
           </div>
         </div>
 
-         @if (isAddingSong || isSearching()) {
+         @if (isAddingSong || isSearching() || isRemovingSong()) {
             <div class="loading-overlay">
-              <p>{{ isSearching() ? 'Buscando...' : 'Adicionando...' }}</p>
+              <p>
+                {{ isSearching() ? 'Buscando...' : 
+                   isAddingSong ? 'Adicionando...' : 
+                   'Removendo...' }}
+              </p>
               <div class="loader"></div>
             </div>
           }

@@ -324,7 +324,7 @@ input:focus {
   transform: none;
 }
 
-/* Loader */
+/* Loader Overlay */
 .loading-overlay {
   display: flex;
   align-items: center;
@@ -333,29 +333,6 @@ input:focus {
   color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 1rem;
-}
-
-.loader {
-  height: 25px; /* Ajustado para não ficar gigante */
-  aspect-ratio: 1;
-  padding: 4px;
-  border-radius: 50%;
-  box-sizing: border-box;
-  position: relative;
-  mask: conic-gradient(#000 0 0) content-box exclude, conic-gradient(#000 0 0);
-  filter: blur(4px);
-}
-
-.loader:before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-conic-gradient(#0000 0 5%, #C02942, #0000 20% 50%);
-  animation: l2 1.5s linear infinite;
-}
-
-@keyframes l2 {
-  to { rotate: 1turn }
 }
 
 .error {

@@ -79,3 +79,51 @@ body {
     filter: drop-shadow(0 0 20px var(--primary-dark)) drop-shadow(0 0 8px var(--primary-color));
   }
 }
+
+/* --- Loader Global --- */
+.loader {
+  width: 50px;
+  aspect-ratio: 1;
+  display: grid;
+  border: 4px solid #0000;
+  border-radius: 50%;
+  border-right-color: var(--primary-color);
+  animation: l15 1s infinite linear;
+}
+.loader::before,
+.loader::after {    
+  content: "";
+  grid-area: 1/1;
+  margin: 2px;
+  border: inherit;
+  border-radius: 50%;
+  animation: l15 2s infinite;
+}
+.loader::after {
+  margin: 8px;
+  animation-duration: 3s;
+}
+@keyframes l15 { 
+  100%{transform: rotate(1turn)}
+}
+
+/* --- Loader Pequeno (para botões) --- */
+.loader-small {
+  width: 20px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  border-right-color: transparent;
+  animation: l15 1s infinite linear;
+  display: inline-block;
+}
+
+.alert-error {
+  background-color: rgba(224, 0, 32, 0.1);
+  color: var(--error-color);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--error-color);
+  font-size: 0.9rem;
+}

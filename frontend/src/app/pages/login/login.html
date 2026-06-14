@@ -21,8 +21,12 @@
       <input id="password" type="password" placeholder="Insira sua senha" formControlName="password">
     </div>
 
-    <button type="submit" class="cta-button" [disabled]="!loginForm.valid">
-      Entrar
+    <button type="submit" class="cta-button" [disabled]="!loginForm.valid || isLoading()">
+      @if (isLoading()) {
+        <div class="loader-small"></div>
+      } @else {
+        Entrar
+      }
     </button>
   </form>
 

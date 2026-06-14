@@ -24,11 +24,13 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 || error.status === 403) {
-          // Token expirado ou inválido
+        if (error.status === 401) {
+          // Token expirado ou inválido - Redireciona para login
           localStorage.removeItem('jwt');
           this.router.navigate(['/login']);
         }
+        // No caso de 403 (Forbidden), não deslogamos o usuário, 
+        // apenas repassamos o erro para ser tratado pelo componente (ex: exibir mensagem de erro).
         return throwError(() => error);
       })
     );

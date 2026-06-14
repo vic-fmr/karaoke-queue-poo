@@ -49,6 +49,7 @@ export class Session implements OnInit, OnDestroy {
   searchResults = signal<YouTubeVideo[]>([]); // Armazena a lista de vídeos encontrados
   isSearching = signal<boolean>(false);       // Controla o loading da busca
   isAddingSong: boolean = false;              // Controla o loading da adição (ao clicar no vídeo)
+  isRemovingSong = signal<boolean>(false);    // Controla o loading da remoção
 
   queue = signal<QueueViewItem[]>([]);
   current = signal<QueueViewItem | null>(null);
@@ -192,8 +193,13 @@ export class Session implements OnInit, OnDestroy {
   removeSong(queueItemId: number) {
     if (!this.sessionCode) return;
 
+    this.isRemovingSong.set(true);
     const removeSub = this.karaokeService.removeSong(this.sessionCode, queueItemId).subscribe({
-      error: (err) => console.error('[Session] Erro ao remover música', err),
+      next: () => this.isRemovingSong.set(false),
+      error: (err) => {
+        console.error('[Session] Erro ao remover música', err);
+        this.isRemovingSong.set(false);
+      },
     });
     this.subscriptions.add(removeSub);
   }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -15,6 +15,7 @@ export class Register {
   // <--- Nome da classe é 'Register'
 
   signUpError: string | null = null;
+  isLoading = signal(false);
 
   // Injeta o Router e o UserService
   constructor(private router: Router, private authService: AuthService) {}
@@ -27,6 +28,9 @@ export class Register {
 
   onSubmit() {
     if (this.registerForm.valid) {
+      this.isLoading.set(true);
+      this.signUpError = null;
+
       // Salva o nome no serviço
       const username = this.registerForm.value.name || 'Usuário';
       const email = this.registerForm.value.email || '';
@@ -36,13 +40,19 @@ export class Register {
         next: () => {
           // opcional: auto-login após cadastro
           this.authService.login(email, password).subscribe({
-            next: () => this.router.navigate(['/home']),
-            error: () => this.router.navigate(['/login']),
+            next: () => {
+              this.isLoading.set(false);
+              this.router.navigate(['/home']);
+            },
+            error: () => {
+              this.isLoading.set(false);
+              this.router.navigate(['/login']);
+            },
           });
         },
         error: (err) => {
           console.error('Erro register', err);
-
+          this.isLoading.set(false);
           this.signUpError = err.error?.message || 'Erro ao registrar usuário.';
         },
       });

@@ -26,8 +26,12 @@
       <input id="password" type="password" placeholder="Senha" formControlName="password">
     </div>
 
-    <button type="submit" class="cta-button" [disabled]="!registerForm.valid">
-      Criar conta.
+    <button type="submit" class="cta-button" [disabled]="!registerForm.valid || isLoading()">
+      @if (isLoading()) {
+        <div class="loader-small"></div>
+      } @else {
+        Criar conta.
+      }
     </button>
   </form>
 
