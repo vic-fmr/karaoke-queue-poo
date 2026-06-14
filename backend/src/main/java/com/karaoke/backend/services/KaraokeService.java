@@ -94,6 +94,12 @@ public class KaraokeService {
                         () -> new SessionNotFoundException("Sessão com código '" + accessCode + "' não encontrada."));
     }
 
+    @Transactional(readOnly = true)
+    public QueueItem getQueueItem(Long queueItemId) {
+        return queueItemRepository.findById(queueItemId)
+                .orElseThrow(() -> new RuntimeException("Item da fila não encontrado: " + queueItemId));
+    }
+
     @Transactional
     public void endSession(String accessCode) {
         KaraokeSession session = getSession(accessCode);

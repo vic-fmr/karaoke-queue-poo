@@ -21,6 +21,7 @@ import com.karaoke.backend.dtos.SessionResponseDTO;
 import com.karaoke.backend.dtos.UserDTO;
 import com.karaoke.backend.dtos.YouTubeVideoDTO;
 import com.karaoke.backend.models.KaraokeSession;
+import com.karaoke.backend.models.QueueItem;
 import com.karaoke.backend.models.User;
 import com.karaoke.backend.services.KaraokeService;
 import com.karaoke.backend.services.FilaService; // Importe o FilaService
